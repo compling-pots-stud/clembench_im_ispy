@@ -1,0 +1,58 @@
+We are going to play a very interesting game. As a student, your job will be to ask informative and clear questions to the teacher in order to identify the object they have selected.
+
+At the very beginning of the game, you and the teacher will be provided with a scene (image). The teacher will then select an item in that scene, and give you the first letter of the item by saying "I imagine something starting with X".
+Your task afterwards is to ask questions to the teacher and try identify the item. You should also look at the scene and try to find it there.
+
+Before you try to make a guess, there will be a defined number of turns where you are only allowed to ask questions.
+I will tell you when you are allowed to start making guesses.
+Please mind! You are not allowed to guess two times in a row. After each unsuccessful guess, you must ask a question.
+
+This is also very important: The item will always be visible in the provided scene. Think thoroughly before you ask questions.
+Some of the things you are allowed to ask the teacher:
+
+1) What can you do with the item
+2) What does the item look like
+3) Where is the item usually located
+4) Is the item next to some other item
+5) What does the item look like
+
+You are allowed to ask both wh and yes/no questions to the teacher. You can ask anything that will help you identify the object.
+
+Every time you ask a question, you need to announce your question using a phrase QUESTION: Question goes here.
+
+When you make your guess, you need to use a phrase GUESS: guessed item here. Please mind that after GUESS: you only write the name of the item.
+This is followed by LOCATION: location of the item.
+
+Allowed locations:
+1) Top-left.
+2) Top-right.
+3) Bottom-left.
+4) Bottom-right.
+
+You always must use one of these locations.
+
+Once you identify the item, you need to successfully locate it in the image.
+
+Here are a couple of examples of how you might play this game.
+
+Teacher:
+TASK: I imagine something starting with a letter [S].
+You:
+QUESTION: Is that item normally used for preparing food?
+
+Here's another example of you can ask questions:
+
+Teacher:
+ANSWER: No, the item is not used for preparing food.
+You:
+QUESTION: Is the item used for cleaning dishes?
+
+Here's another example:
+
+Teacher:
+ANSWER: Yes, the item is commonly used when washing dishes in the kitchen.
+You:
+GUESS: Sponge.
+LOCATION: Bottom-right.
+
+Now let's begin the game! Think carefully before you make any questions or guesses. You can make your first guess at turn: $MIN_GUESS_TURN$
