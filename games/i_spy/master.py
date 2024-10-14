@@ -2,17 +2,13 @@ import sys
 import logging
 from pathlib import Path
 from typing import Tuple, Dict, List
-from navigation import get_quadrant
 import re
 
 sys.path.append(str(Path(__file__).parent.parent.parent))
-
 from backends import Model
 from clemgame import get_logger
 from clemgame.clemgame import GameBenchmark, GameMaster, DialogueGameMaster, Player
-from player import Teacher, Learner
-import imghdr
-import base64
+from games.i_spy.player import Teacher, Learner
 
 MAX_TURNS = 10
 GAME_NAME = 'i_spy'
@@ -47,10 +43,13 @@ class ISpyGameMaster(DialogueGameMaster):
         self.game_instance: dict = game_instance
         self.scene: list[str]= [game_instance["image"]]
         self.selected_object: str = game_instance["selected_object"]
+        self.object_location: str = game_instance["object_quadrant"]
         self.visible_objects: set[str] = set(game_instance["visible_objects"])
         self.min_guess_turn: int = game_instance["min_guess_turn"]
 
         self.teacher_prompt = self.teacher_prompt.replace("$OBJECT$", self.selected_object)
+        self.teacher_prompt = self.teacher_prompt.replace("$OBJECT_LOCATION$", self.object_location)
+
         self.learner_prompt = self.learner_prompt.replace("$MIN_GUESS_TURN$", str(self.min_guess_turn))
 
         self.turn_template = self.load_template(TURN_TEMPLATE)
@@ -144,26 +143,33 @@ class ISpyGameMaster(DialogueGameMaster):
 
                 #Answer not correct if they don't start with the same letter
                 if self.previous_learner_guess[0] != self.selected_object.lower()[0]:
+                    print('1')
+                    self.invalid_response = True
                     return False
 
                 # verify that the object is in the correct location
-                if self.guessed_location:
-                    pass
+                # potentially remove this, probably not needed for gameflow. Can be useful for teacher eval.
+                # currently this gate should be checked under learner.
+                if  self.object_location.lower() not in self.guessed_location.lower():
+                    print('2')
+                    self.invalid_response = True
+                    return False
 
                 self.correct_guess = True
                 self.log_to_self("object correctly guessed", "continue")
+                print('3')
                 return True
 
             # if the learner's last response was a question, teacher must provide answer
             if self.learner.last_is_question is True:
                 if not "ANSWER" in response_keys:
-
+                    print('4')
                     self.invalid_response = True
                     return False
 
                 # teacher not allowed to name the object in the response
                 if self.selected_object.lower() in response['ANSWER'].lower():
-
+                    print('5')
                     self.invalid_response = True
                     return False
 
@@ -174,29 +180,37 @@ class ISpyGameMaster(DialogueGameMaster):
             # can't guess twice in a row. TODO: add error codes
             if not self.learner.last_is_question and "GUESS" in response_keys:
                 self.invalid_response = True
+                print('6')
                 return False
 
             # not allowed to guess this turn.
             if not self.can_guess and "GUESS" in response_keys:
                 # not allowed to guess yet
                 self.invalid_response = True
+                print('7')
+
                 return False
 
             # Location not provided
             if self.can_guess and "GUESS" in response_keys:
                 if not "LOCATION" in response_keys:
                     self.invalid_response = True
+                    print('8')
+
                     return False
 
             # else:
             # if guess hasn't been made, and no QUESTION tag either
             if not "QUESTION" in response_keys and not "GUESS" in response_keys:
                 self.invalid_response = True
+                print('9')
+
                 return False
 
             # can't guess and make a question.
             if "QUESTION" in response_keys and "GUESS" in response_keys:
                 self.invalid_response = True
+                print('10')
                 return False
 
             # also needs to check LOCATION is proper. If not, then some other verification method.
@@ -212,6 +226,10 @@ class ISpyGameMaster(DialogueGameMaster):
                 self.guessed_location = response["LOCATION"].lower()
 
                 if self.selected_object.lower() == self.previous_learner_guess:
+                    if self.object_location.lower() not in self.guessed_location.lower():
+                        self.invalid_response = True
+                        return False
+
                     self.correct_guess = True
                     self.log_to_self("object correctly guessed", "continue")
                     return True
@@ -296,20 +314,23 @@ class ISpyBenchmark(GameBenchmark):
 
     def create_game_master(self,
                            experiment: Dict,
-                           player_backends: List[str]
+                           player_backends: List[Model]
                            ) -> GameMaster:
+
         return ISpyGameMaster(experiment, player_backends)
 
 
-if __name__ == "__main__":
-    from clemgame import benchmark
-    from scripts.cli import read_model_specs
-
-    model_specs: list[str] = ["gpt-4o-2024-08-06", "gpt-4o-2024-08-06"]
-    gen_args: dict[str: str] = {"temperature": 0.0, "max_tokens": 400}
-
-    benchmark.run(
-        game_name=GAME_NAME,
-        model_specs=read_model_specs(model_specs),
-        gen_args=gen_args,
-    )
+# if __name__ == "__main__":
+#     from clemgame import benchmark
+#     from scripts.cli import read_model_specs
+#
+#     model_specs: list[str] = ["gpt-4o-2024-08-06", "gpt-4o-2024-08-06"]
+#     # model_specs: list[str] = ["llava-v1.5-7b-4096-preview", "llava-v1.5-7b-4096-preview"]
+#
+#     gen_args: dict[str: str] = {"temperature": 0.0, "max_tokens": 400}
+#
+#     benchmark.run(
+#         game_name=GAME_NAME,
+#         model_specs=read_model_specs(model_specs),
+#         gen_args=gen_args,
+#     )

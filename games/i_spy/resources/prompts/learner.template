@@ -24,10 +24,15 @@ When you make your guess, you need to use a phrase GUESS: guessed item here. Ple
 This is followed by LOCATION: location of the item.
 
 Allowed locations:
-1) Top-left.
-2) Top-right.
-3) Bottom-left.
-4) Bottom-right.
+1) Top-Left.
+2) Top-Center.
+3) Top-Right.
+4) Middle-Left
+4) Middle-Center
+6) Middle-Right
+7) Bottom-Left.
+8) Bottom-Center.
+9) Bottom-Right.
 
 You always must use one of these locations.
 

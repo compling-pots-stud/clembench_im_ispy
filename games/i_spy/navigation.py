@@ -12,11 +12,12 @@ VIS_THRESHOLD = 3
 
 def get_scenes() -> list[str]:
     kitchens = [f"FloorPlan{i}" for i in range(1, 31)]
-    living_rooms = [f"FloorPlan{200 + i}" for i in range(1, 31)]
-    bedrooms = [f"FloorPlan{300 + i}" for i in range(1, 31)]
-    bathrooms = [f"FloorPlan{400 + i}" for i in range(1, 31)]
+    # living_rooms = [f"FloorPlan{200 + i}" for i in range(1, 31)]
+    # bedrooms = [f"FloorPlan{300 + i}" for i in range(1, 31)]
+    # bathrooms = [f"FloorPlan{400 + i}" for i in range(1, 31)]
 
-    scenes = kitchens + living_rooms + bedrooms + bathrooms
+    # scenes = kitchens + living_rooms + bedrooms + bathrooms
+    scenes = kitchens
 
     return scenes
 
@@ -62,41 +63,43 @@ def get_rotation(
 
     # change angle using controller.step(action="Teleport", rotation=dict(x=0, y=theta, z =0))
 
-# Function to determine the quadrant of the object in the agent's view
-def get_quadrant(object_position: Dict[str, float],
-                 agent_position: Dict[str, float],
-                 agent_rotation: Dict[str, float]) -> str:
-    local_position = get_frame_position(object_position, agent_position, agent_rotation)
+# does not work, fix it
+def get_quadrant(frame_coordinates: list[int], frame_width: int, frame_height: int) -> str:
 
-    x_rel, z_rel = local_position
-    if x_rel < 0 and z_rel > 0:
-        return "Top-left"
-    elif x_rel > 0 and z_rel > 0:
-        return "Top-right"
-    elif x_rel < 0 and z_rel < 0:
-        return "Bottom-left"
+    # get object center
+
+    x_mean, y_mean = get_object_center(frame_coordinates)
+
+    # split into 9 sub_cells
+    # top left corne is (0,0)
+    x_thresholds = [frame_width/3, 2*frame_width/3]
+    y_thresholds = [2*frame_height/3, frame_height/3]
+
+
+    # Determine horizontal position
+    if x_mean < x_thresholds[0]:
+        horizontal = "Left"
+    elif x_mean > x_thresholds[1]:
+        horizontal = "Right"
     else:
-        return "Bottom-right"
+        horizontal = "Center"
 
-# Function to transform object's global position to the agent's local frame
-def get_frame_position(object_position: Dict[str, float], agent_position: Dict[str, float], agent_rotation: Dict[str, float]) -> np.ndarray:
-    # Translate object position relative to agent
-    rel_position = np.array([
-        object_position['x'] - agent_position['x'],
-        object_position['z'] - agent_position['z']
-    ])
+    # Determine vertical position
+    if y_mean > y_thresholds[0]:
+        vertical = "Bottom"
+    elif y_mean < y_thresholds[1]:
+        vertical = "Top"
+    else:
+        vertical = "Middle"
 
-    # Get the agent's yaw (rotation around y-axis) and create rotation matrix
-    yaw = np.deg2rad(agent_rotation['y'])  # Convert yaw to radians
-    rotation_matrix = np.array([
-        [np.cos(yaw), -np.sin(yaw)],
-        [np.sin(yaw),  np.cos(yaw)]
-    ])
+    return f"{vertical}-{horizontal}"
 
-    # Rotate the relative position to get the local position in the agent's view
-    local_position = np.dot(rotation_matrix, rel_position)
-    return local_position
+def get_object_center(frame_coordinates: list[int]) -> tuple[float, float]:
 
+    x_mean = float(np.mean([frame_coordinates[0], frame_coordinates[2]]))
+    y_mean = float(np.mean([frame_coordinates[1], frame_coordinates[3]]))
+
+    return x_mean, y_mean
 
 def get_object_in_frame(
         controller: Controller,

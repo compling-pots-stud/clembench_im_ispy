@@ -5,10 +5,10 @@ import json
 from PIL import Image
 import time
 
-DOWNSIZED_IMAGE_OUTPUT_PATH = "resources/images/images_v1_downsized"
-IMAGE_OUTPUT_PATH = "resources/images/images_v1"
+DOWNSIZED_IMAGE_OUTPUT_PATH = "resources/images/images_v2_downsized"
+IMAGE_OUTPUT_PATH = "resources/images/images_v2"
 METADATA_OUTPUT_PATH = "resources/metadata"
-METADATA_FILENAME = "metadata_v1.json"
+METADATA_FILENAME = "metadata_v2.json"
 
 SEED = 21
 SAMPLE_SIZE = 10
@@ -62,8 +62,10 @@ def build_dataset():
                             snapToGrid=SNAP_TO_GRID,
 
                             # image modalities
-                            renderDepthImage=False,
-                            renderInstanceSegmentation=False,
+                            renderDepthImage=True,
+                            renderClassImage=True,
+                            renderObjectImage=True,
+                            renderInstanceSegmentation=True,
                             # camera properties
                             width=WIDTH,
                             height=HEIGHT,
@@ -93,7 +95,15 @@ def build_dataset():
                 if frame_accepted(controller):
                     visible_objects = get_visible(controller)
                     name = f'{scene}_{inx}.png'
+                    # add 2d xy coordinates of each object to metadata
+                    try:
+                        visible_objects = get_2d(controller, visible_objects)
+                    except:
+                        print("Error, no 2d for objects")
+                        iteration += 1
+                        continue
                     save_image(controller, name)
+
                     #add to metadata
                     metadata['scene_meta'][name] = {
                                     'visible_objects': visible_objects,
@@ -172,9 +182,17 @@ def resize_and_save_images(input_folder: str, output_folder: str, size: tuple[in
             img_resized.save(save_path)
             print(f"Saved resized image to {save_path}")
 
+def get_2d(controller, visible):
+    for object in visible:
+        obj_id = object['objectId']
+        frame_coords = controller.last_event.instance_detections2D[obj_id]
+        object['frame_coords'] = frame_coords
+
+
+    return visible
 
 
 if __name__ == "__main__":
-    # build_dataset()
+    build_dataset()
     # see which size fits better
-    resize_and_save_images(IMAGE_OUTPUT_PATH, DOWNSIZED_IMAGE_OUTPUT_PATH, (120, 100))
+    # resize_and_save_images(IMAGE_OUTPUT_PATH, DOWNSIZED_IMAGE_OUTPUT_PATH, (120, 100))
