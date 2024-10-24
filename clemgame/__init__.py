@@ -18,7 +18,6 @@ BANNER = \
 print(BANNER)
 
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
 # Configure logging
 with open(os.path.join(project_root, "logging.yaml")) as f:
     conf = yaml.safe_load(f)

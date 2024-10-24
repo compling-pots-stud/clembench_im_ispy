@@ -193,3 +193,7 @@ cython_debug/
 #.idea/
 /venv_hf/
 /venv_llamacpp/
+/package-lock.json
+/games/i_spy/notebooks/
+/games/i_spy/resources/images/
+/games/i_spy/resources/metadata/

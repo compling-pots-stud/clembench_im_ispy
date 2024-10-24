@@ -14,6 +14,7 @@ IMG_PATH = '/Users/dicaristic/PycharmProjects/playpen_im/clembench/games/i_spy/r
 METADATA = '/Users/dicaristic/PycharmProjects/playpen_im/clembench/games/i_spy/resources/metadata/metadata_v2.json'
 TEACHER_TEMP = 'resources/prompts/teacher.template'
 LEARNER_TEMP = 'resources/prompts/learner.template'
+MISTAKE_TEMP = 'resources/prompts/learner_mistake.template'
 GAME_NAME = 'i_spy'
 NUM_INSTANCES = 5
 SEED = 58
@@ -35,9 +36,12 @@ class IspyInstanceGenerator(GameInstanceGenerator):
 
         init_teacher_prompt = self.load_template(TEACHER_TEMP)
         init_learner_prompt = self.load_template(LEARNER_TEMP)
+        init_mistake_prompt = self.load_template(MISTAKE_TEMP)
         experiment = self.add_experiment('base')
         experiment['teacher_prompt'] = init_teacher_prompt
         experiment['learner_prompt'] = init_learner_prompt
+        experiment['learner_mistake_prompt'] = init_mistake_prompt
+
         with open(METADATA, 'r') as f:
             img_metadata = json.load(f)
         img_list = list(img_metadata['scene_meta'].keys())
