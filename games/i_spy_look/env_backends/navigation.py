@@ -86,58 +86,53 @@ class Agent:
         raise ValueError(f"Unsupported environment: {self.environment}")
 
     def move(self, direction: str):
-        """Universal method to move the agent in a given direction."""
         if hasattr(self.agent, 'move'):
             if MOVE_DIRECTIONS.get(direction.lower()):
                 try:
                     self.agent.move(direction.lower())
                     self.error = None
-
-                except ValueError as e:
-                    self.error = str(e) # Store the error message
-                    print(f"Error while moving: {e}")  # Optional: Print the error
+                except Exception as e:
+                    self.error = str(e)
+                    print(f"Error while moving: {e}")
             else:
-                raise ValueError(f"Unsupported Move Direction: {direction} \n"
-                                 f" Please choose one of the following: {[move for move in MOVE_DIRECTIONS.keys()]}")
+                self.error = f"Unsupported Move Direction: {direction}"
+                print(self.error)
         else:
             raise NotImplementedError("Move method not implemented for this agent.")
 
     def look(self, direction: str):
-        """Universal method to change the agent's viewpoint."""
         if hasattr(self.agent, 'look'):
             if LOOK_DIRECTIONS.get(direction.lower()):
                 try:
                     self.agent.look(direction.lower())
                     self.error = None
-
-                except ValueError as e:
-                    self.error = str(e) # Store the error message
-                    print(f"Error while looking: {e}")  # Optional: Print the error
+                except Exception as e:
+                    self.error = str(e)
+                    print(f"Error while looking: {e}")
             else:
-                raise ValueError(f"Unsupported Look Direction: {direction} \n"
-                                 f" Please choose one of the following: {[look for look in LOOK_DIRECTIONS.keys()]}")
+                self.error = f"Unsupported Look Direction: {direction}"
+                print(self.error)
         else:
             raise NotImplementedError("Look method not implemented for this agent.")
 
     def turn(self, direction: str):
-        """Universal method to turn the agent in a given direction."""
         if hasattr(self.agent, 'turn'):
             if TURN_DIRECTIONS.get(direction.lower()):
                 try:
                     self.agent.turn(direction.lower())
                     self.error = None
-                except ValueError as e:
-                    self.error = str(e) # Store the error message
-                    print(f"Error while turning: {e}")  # Optional: Print the error
+                except Exception as e:
+                    self.error = str(e)
+                    print(f"Error while turning: {e}")
             else:
-                raise ValueError(f"Unsupported Turn Direction: {direction} \n"
-                                 f" Please choose one of the following: {[turn for turn in TURN_DIRECTIONS.keys()]}")
+                self.error = f"Unsupported Turn Direction: {direction}"
+                print(self.error)
         else:
             raise NotImplementedError("Turn method not implemented for this agent.")
 
-    def teleport(self, **positions):
+    def teleport(self, position: dict, rotation: dict = None, horizon: int = None):
         try:
-            self.agent.teleport(**positions)
+            self.agent.teleport(position, rotation, horizon)
             self.error = None
 
         except ValueError as e:
@@ -181,30 +176,28 @@ class Agent:
                               agent_position: Dict[str, float],
                               agent_rotation: Dict[str, float]
                               ):
-        # theta is in [0, 180] range
-        # if object is on left side, theta will be negative.
-        # Theta is NOT relative to the current POV (agent rotation).
-        #
 
         theta = self.get_rotation(object_position, agent_position)
 
         agent_y = agent_rotation['y']
         rotation = theta - agent_y
+        rotation = (theta - agent_y + 360) % 360  # Normalize to [0, 360)
 
         print(f'rotation: {rotation}')
 
         # potentially account for cases when object is in POV (i.e. ahead).
         # if y is larger than theta, object is to the left of the agent.
-        if rotation < 0:
-            return 'left'
 
-        # if diff is larger than 180, it is neaarer to turn left
-        elif rotation > 180:
-            return 'left'
 
-        # otherwise the agent should turn to the right
-        else:
+        half_fov = FOV / 2
+        if -half_fov <= rotation <= half_fov or 360 - half_fov <= rotation <= 360:
+            return 'up or down'
+
+        # Determine left or right direction if outside FOV
+        if rotation < 180:
             return 'right'
+        else:
+            return 'left'
 
 
     def screenshot(self, name, path):

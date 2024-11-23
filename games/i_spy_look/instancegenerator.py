@@ -25,13 +25,18 @@ GAME_NAME = 'i_spy_look'
 NUM_INSTANCES = 5
 SEED = 58
 MIN_GUESS_TURN = 5
-K = 5
+K = 10
 
 
 POSITION_INDEX_LIST = [0, 1, 2, 3, 4, 5]
 ROTATION_VALUE_LIST = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330]
 HORIZON_VALUE_LIST = [-30, 0, 30, 60]
 
+# OBJECT TYPES
+OBJECT_EXCLUSION_LIST = ['Bathtub', 'Blinds', 'Bed', 'BathtubBasin', 'Cabinet', 'CoffeeTable', 'CounterTop',
+                         'Curtains', 'Desk','DiningTable', 'Dresser','EggCracked', 'Floor','Fridge','LettuceSliced',
+                         'Mirror', 'PotatoSliced', 'ShelvingUnit', 'ShowerCurtain', 'ShowerDoor', 'ShowerGlass',
+                         'Sofa', 'TargetCircle', 'TomatoSliced', 'Window']
 
 
 def split_camel_case(word):
@@ -82,16 +87,16 @@ class IspyLookInstanceGenerator(GameInstanceGenerator):
             if i == 0:
                 controller = Controller(
                     agentMode="default",
-                    visibilityDistance=20,
+                    visibilityDistance=8,
                     scene=scenes[0],
                     # step sizes
                     gridSize=0.5,
                     snapToGrid=True,
 
                     # image modalities
-                    renderDepthImage=False,
-                    renderClassImage=False,
-                    renderObjectImage=False,
+                    renderDepthImage=True,
+                    renderClassImage=True,
+                    renderObjectImage=True,
                     renderInstanceSegmentation=True,
                     # camera properties
                     width=800,
@@ -117,15 +122,17 @@ class IspyLookInstanceGenerator(GameInstanceGenerator):
             for k in range(K):
                 selected_object = selected_objects[k]
                 sel_object_type = selected_object['objectType']
-                unique = self.obj_is_unique(sel_object_type, objects)
+                if sel_object_type in OBJECT_EXCLUSION_LIST:
+                    continue
 
+                unique = self.obj_is_unique(sel_object_type, objects)
                 if unique:
                     break
 
             selected_object_name = split_words_only_if_camel_case([selected_object['objectType']])[0]
 
-            position_index = self.random_select_obj(POSITION_INDEX_LIST, 1)[0]
-            agent_position, agent_rotation = get_object_in_frame(controller, selected_object, position_index)
+            # position_index = self.random_select_obj(POSITION_INDEX_LIST, 1)[0]
+            agent_position, agent_rotation = get_object_in_frame(controller, selected_object)
             agent_rotation['y'] = self.random_select_obj(ROTATION_VALUE_LIST, 1)[0] # left/right rotation
             agent_horizon = self.random_select_obj(HORIZON_VALUE_LIST, 1)[0] # up/down position
 
@@ -141,8 +148,8 @@ class IspyLookInstanceGenerator(GameInstanceGenerator):
 
     def get_objects(self, controller: Controller) -> list[dict[str, Any]]:
         obj_in_scene = controller.last_event.metadata['objects']
-        visible = [obj for obj in obj_in_scene]
-        return visible
+        objects = [obj for obj in obj_in_scene]
+        return objects
 
     def random_select_images(self, some_list: list[str]):
         samples = random.sample(some_list, NUM_INSTANCES)

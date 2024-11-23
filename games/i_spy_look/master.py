@@ -18,7 +18,7 @@ import os
 
 IMAGE_OUTPUT_PATH = 'resources/images'
 METADATA_OUTPUT_PATH='resources/metadata'
-MAX_TURNS = 7
+MAX_TURNS = 10
 MAX_REPROMPTS = 2
 GAME_NAME = 'i_spy_look'
 TURN_TEMPLATE = "resources/prompts/turn.template"
@@ -42,20 +42,14 @@ ERROR_CODEBOOK = {
     10: 'You are not allowed to move when making a GUESS. Please try again.',
     11: 'You can only make one move each turn. Please try again.',
     12: 'This move is not possible due to the following reason: $REASON$ \nPlease try again!',
+    13: 'You are not allowed to mention the exact location of the object in your answers. Please try again.'
 }
 
 
-"""
-TODO: 
-1) Every turn check the location of the object relative to the POV (use get_rotation). √
-2) Tell the teacher where the object is and whether the agent should turn that way. √
-
-"""
 
 
 """
 Learner plays first 
-
 """
 
 class ISpyLookGameMaster(DialogueGameMaster):
@@ -138,12 +132,13 @@ class ISpyLookGameMaster(DialogueGameMaster):
         self.task_msg: str | None = None # task definition, starting letter of the object
         self.last_guess: str | None = None # what was the learners last guess
         self.last_guess_location: str | None = None # last guess item location
-        # was there movement on the previous turn? If yes, take a new screenshot and add it to the stranscript.
+        # was there movement on the previous turn? If yes, take a new screenshot and add it to the transcript.
         self.movement_on_last: bool = False
         self.error_code: int | None = None
         self.reprompt_counter = 0
 
         # for reprompting - store the last uttered piece to add to assistant history.
+
         self.last_utterance = None
     def _on_before_game(self):
         """
@@ -175,10 +170,7 @@ class ISpyLookGameMaster(DialogueGameMaster):
 
         self.n_turns+=1
 
-        self._get_object_location() # get the location of the object (we need to tell the teacher if it's in frame).
-        # self._add_teacher_object_location_prompt() # add the information to the teacher's prompt - moved to AFTER
-        # PLAYER RESPONSE
-
+        # self._get_object_location() # get the location of the object (we need to tell the teacher if it's in frame).
         self._add_learner_turn_prompt() # tell learner turn number
         self._check_guess_allowed() # is the guess allowed?
         self._enable_learner_guess() # if guess is allowed, add prompt to learner
@@ -355,6 +347,22 @@ class ISpyLookGameMaster(DialogueGameMaster):
                 self.invalid_response = True
                 return False
 
+            if self.object_location and self.object_location in response['ANSWER'].lower():
+                self.error_code = 13
+                print('Teacher mentioned the exact location')
+                print(response)
+                self.invalid_response = True
+                return False
+
+        if "INCORRECT" in response_keys:
+            if self.object_location and self.object_location in response['INCORRECT'].lower():
+                self.error_code = 13
+                print('Teacher mentioned the exact location')
+                print(response)
+                self.invalid_response = True
+                return False
+
+
         # check if it's needed - the idea is to once we have an invalid response, if the next reprompt is fine,
         # return to False
         return True
@@ -399,7 +407,6 @@ class ISpyLookGameMaster(DialogueGameMaster):
 
         # increment the reprompt counter
         self.reprompt_counter += 1
-
         # add assistant message -> LLM Makes a mistake, we add that sentence to history, then we correct them.
         # maybe not the best way to reprompt. Try with the standard approach as well.
         self.add_assistant_message(player, self.last_utterance)
@@ -422,7 +429,6 @@ class ISpyLookGameMaster(DialogueGameMaster):
 
 
         if self.n_turns == 1 and self.next_player == self.teacher:
-
             print(self.selected_object)
             self.add_user_message(self.teacher, self.teacher_prompt, self.current_image)
             logger.info("Added Prompt Teacher")
@@ -440,6 +446,7 @@ class ISpyLookGameMaster(DialogueGameMaster):
         logger.info(f"done print utterance")
 
         if self.next_player == self.teacher:
+            self._get_object_location()
             self._add_teacher_object_location_prompt()
 
         if self.next_player == self.teacher and not self.learner.last_is_question:
@@ -448,9 +455,6 @@ class ISpyLookGameMaster(DialogueGameMaster):
         # Update -> change who is playing after the next player (i.e. the current player comes after the next).
         self.next_player = self.teacher if player == self.teacher else self.learner
         logger.info(f"done after add player")
-
-
-
 
     # use this to validate the guess before it is given to the teacher.
     # Prevent teacher from calling success before the answer is correct.
@@ -485,7 +489,7 @@ class ISpyLookGameMaster(DialogueGameMaster):
                  + self.learner_mistake_prompt.replace("$MISTAKE$",
                                                               f"The object is not visible in this frame, "
                                                               f"therefore the location is incorrect. To see the "
-                                                              f"object, turn the camera to the {self.rotate_to}" 
+                                                              f"object, turn the camera {self.rotate_to}" 
                                                               " If the learner guessed the item correctly, "
                                                               "tell them that the location was incorrect and that the object is currently not visible in the frame."
                                                               " Otherwise, the entire guess is incorrect.")
@@ -507,7 +511,8 @@ class ISpyLookGameMaster(DialogueGameMaster):
 
 
     def _parse_response(self, utterance: str) -> Dict[str, str]:
-        pattern = r'(GUESS|LOCATION|ANSWER|QUESTION|TASK|SUCCESS|LOOK|MOVE|TURN):\s*(.*?)(?=\n{2,}|(?=\n[A-Z]+:)|$)'
+        pattern = (r'(GUESS|LOCATION|ANSWER|INCORRECT|QUESTION|TASK|SUCCESS|LOOK|MOVE|TURN):\s*(.*?)(?=\n{2,'
+                   r'}|(?=\n[A-Z]+:)|$)')
         return {key: value.strip() for key, value in re.findall(pattern, utterance)}
 
     def _get_object_location(self):
@@ -517,7 +522,10 @@ class ISpyLookGameMaster(DialogueGameMaster):
         If not:
             - Tell the learner + teacher where to look (left, right).
         """
-        current_object_meta = self.metadata[self.n_turns-1]['metadata']['objects']
+        # look at the current turn, not previous, since the fn is now called after the learner has made their move.
+        # this allows the teacher to look at the updated image.
+        last_key = list(self.metadata.keys())[-1]
+        current_object_meta = self.metadata[last_key]['metadata']['objects']
         for object in current_object_meta:
             if object['objectId'] == self.selected_object_id:
                 if object['visible']:
@@ -576,19 +584,10 @@ class ISpyLookGameMaster(DialogueGameMaster):
                  + "\n" + message)
 
     def _on_parse_response(self, player: Player, utterance: str) -> Tuple[str, bool]:
-        # potentially return without prefixes.
-        # msg = f"Current turn: {self.n_turns}"
-        # utterance = msg + utterance
         return utterance, True
 
 
-    # from matchit
-    # messages passed in between LLMs with user roles.
     def add_message(self, player: Player, utterance: str, role: str, image = None):
-        """
-        TODO -> ADAPT THIS
-        """
-
         if image is None:
             message = {"role": role, "content": utterance}
         else:
@@ -600,9 +599,6 @@ class ISpyLookGameMaster(DialogueGameMaster):
         self.add_message(player, utterance, role="user", image=image)
 
     def _build_task_message(self):
-        """
-        TODO -> ADAPT THIS
-        """
 
 
         first_letter = self.selected_object.lower()[0]
@@ -614,7 +610,6 @@ class ISpyLookGameMaster(DialogueGameMaster):
         """
         Takes the screenshot of the current scene. Adds the image and meta to matadata file.
         Image stored at:
-
         resources/images/{model1}--{model2}/experiment_n/image_episodeNumber_turnNumber.png
 
         returns: string
@@ -631,7 +626,6 @@ class ISpyLookGameMaster(DialogueGameMaster):
     def _add_to_metadata(self, turn: int, image: str):
         """
         Adds image and scene information to the metadata dictionary.
-
         """
         meta = {'image' : image,
                 'metadata': self.env_agent.get_metadata()}
@@ -645,7 +639,6 @@ class ISpyLookGameMaster(DialogueGameMaster):
             for each turn
                 image name.
                 complete scene metadata.
-
 
         stored inside:
             resources/metadata/{model1}--{model2}/experiment_n/scene_metadata.json

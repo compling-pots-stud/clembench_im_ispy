@@ -14,7 +14,7 @@ and up down to controll the pitch
 
 
 IMAGE_OUTPUT_PATH = ""
-ASPECT_RATIO = (512,307)
+
 
 class BaseEnvironment:
     def __init__(self, **config):
@@ -165,11 +165,24 @@ class AI2ThorEnvironment(BaseEnvironment):
         else:
             raise ValueError(f"Error encountered: {error}")
 
-    def teleport(self, **positions):
+    def teleport(self, position: dict, rotation: dict = None, horizon: int = None):
+        # Prepare the command arguments
+        command_args = {
+            "action": "Teleport",
+            "position": position,
+        }
 
-        self.event = self.controller.step(action="Teleport", **positions)
+        # Add optional arguments if they are provided
+        if rotation is not None:
+            command_args["rotation"] = rotation
+        if horizon is not None:
+            command_args["horizon"] = horizon
+
+        # Execute the Teleport action with provided arguments
+        self.event = self.controller.step(**command_args)
         valid, error = self.check_validity()
 
+        # Check for errors or completion
         if valid:
             self.event = self.controller.step(action="Done")
         else:
@@ -194,7 +207,7 @@ class AI2ThorEnvironment(BaseEnvironment):
 
         # Ensure the output directory exists
         os.makedirs(path, exist_ok=True)
-        img = img.resize(ASPECT_RATIO, Image.Resampling.LANCZOS)
+        img = img.resize((400, 240), Image.Resampling.LANCZOS)
         img.save(full_path)
         return full_path
 

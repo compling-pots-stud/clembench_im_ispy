@@ -369,6 +369,8 @@ class ISpyBenchmark(GameBenchmark):
 
 
 if __name__ == "__main__":
+
+    # comment out to run with cli
     from clemgame import benchmark
     from scripts.cli import read_model_specs
 

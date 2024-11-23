@@ -2,17 +2,17 @@
 
   "AI2THOR" : {
     "agentMode": "default",
-    "visibilityDistance": 8,
+    "visibilityDistance": 5,
     "scene": "FloorPlan212",
     "gridSize": 0.5,
     "snapToGrid": true,
     "renderDepthImage": true,
     "renderClassImage": true,
     "renderObjectImage": true,
-    "renderInstanceSegmentation":true,
+    "renderInstanceSegmentation":false,
     "width": 800,
     "height": 600,
-    "fieldOfView": 90
+    "fieldOfView": 110
   }
 
 

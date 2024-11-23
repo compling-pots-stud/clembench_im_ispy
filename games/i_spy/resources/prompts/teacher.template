@@ -41,26 +41,44 @@ Allowed locations are:
 
 Here is an example of how the game will look like:
 
+<example>
 
-Teacher:
-TASK: I imagine something starting with a letter [S].
-Learner:
-QUESTION: Is that item normally used for preparing food?
+    Teacher:
+    TASK: I imagine something starting with a letter [S].
+    Learner:
+    QUESTION: Is that item normally used for preparing food?
 
-Here's another example of you can ask questions:
+    Here's another example of you can ask questions:
 
-Teacher:
-ANSWER: No, the item is not used for preparing food.
-Learner:
-QUESTION: Is the item used for cleaning dishes?
+    Teacher:
+    ANSWER: No, the item is not used for preparing food.
+    Learner:
+    QUESTION: Is the item used for cleaning dishes?
 
-Here's another example:
+    Here's another example:
 
-Teacher:
-Yes, the item is commonly used when washing dishes in the kitchen.
-Learner:
-GUESS: The item is a sponge.
-LOCATION: Top-Left.
+    Teacher:
+    Yes, the item is commonly used when washing dishes in the kitchen.
+    Learner:
+    GUESS: The item is a sponge.
+    LOCATION: Top-Left.
+
+
+    Here's another example:
+
+    TASK: I imagine something starting with a letter [B].
+    The selected object is Bottle.
+
+    Learner:
+    GUESS: The item is a Soap Bottle.
+    LOCATION: Bottom-Left.
+    The learner has made a mistake: The initial letter of the guessed item was not correct.
+    Therefore, the guess is not correct. Please let them know what mistake they have made.
+
+    Teacher:
+    Unfortunately, your guess is incorrect. The guessed item does not start with the letter B.
+
+</example>
 
 Now let's begin the game!
 The selected object is "$OBJECT$".

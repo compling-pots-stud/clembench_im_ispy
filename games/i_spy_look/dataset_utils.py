@@ -75,7 +75,6 @@ def get_rotation(
 def get_object_in_frame(
         controller: Controller,
         object: Dict[str, Any],
-        position_index: int = 0
     ) -> Optional[Tuple[Dict, Dict]]:
 
 
@@ -90,17 +89,26 @@ def get_object_in_frame(
     # iteration refers to the iterations in the while loop when building a dataset.
     # if closest doesn't work, we select the next closest.
     available_positions: list[Dict[str, float]] = controller.step(action="GetReachablePositions").metadata["actionReturn"]
-    if position_index >= len(available_positions):
-        return None
+    # if position_index >= len(available_positions):
+    #     return None
 
     closest_positions: list[Dict[str, float]] = get_closest_positions(object["position"], available_positions)
-    print(f'iteration: {position_index}')
-    event = controller.step(action="Teleport", **closest_positions[position_index])  # move to the closest position to the object
-    agent_position = event.metadata['agent']['position']  # get agent position
+    for i in range(len(closest_positions)):
 
-    angle: float = get_rotation(object["position"], agent_position)  # get rotation angle
-    rotation = dict(x=0, y=angle,z=0)
-    controller.step(action="Teleport", rotation=dict(x=0, y=angle, z=0))  # rotate
+        print(f'iteration: {i}')
+        event = controller.step(action="Teleport", **closest_positions[i])  # move to the closest position to the object
+        agent_position = event.metadata['agent']['position']  # get agent position
 
-    return closest_positions[position_index], rotation
+        angle: float = get_rotation(object["position"], agent_position)  # get rotation angle
+        rotation = dict(x=0, y=angle,z=0)
+        event = controller.step(action="Teleport", rotation=dict(x=0, y=angle, z=0))  # rotate
+        objects = event.metadata['objects']
+        for ob in objects:
+            if ob['objectType'] == object['objectType']:
+                if ob['visible'] == True:
+                    print('visible')
+                    return closest_positions[i], rotation
 
+                else:
+                    print('not visible')
+                    break

@@ -82,6 +82,8 @@ Valid locations for guesses:
 - Middle-Left, Middle-Center, Middle-Right
 - Bottom-Left, Bottom-Center, Bottom-Right
 
+Please remember: the guess location is relative to the item's position on the screen, not another object. Always say where the item is in the provided image.
+
 EXAMPLE GAMEPLAY SCENARIOS
 NOTE: Turn numbers are only examplary. You are obviously not allowed to guess when you are not told you can do it.
 Scenario 1: Kitchen Scene

@@ -456,8 +456,8 @@ class DialogueGameMaster(GameMaster):
         action = {'type': action_type, 'content': message}
         self.log_event(from_='GM', to=player.descriptor, action=action)
 
-        _prompt, _response, response_message = player(history, self.current_turn)
 
+        _prompt, _response, response_message = player(history, self.current_turn)
         # Player -> GM
         action = {'type': 'get message', 'content': response_message}
         # log 'get message' event including backend/API call:
