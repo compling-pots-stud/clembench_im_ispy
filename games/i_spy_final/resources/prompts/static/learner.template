@@ -1,0 +1,133 @@
+We are going to play a very interesting game. As a student, your job will be to ask informative and clear questions to the teacher in order to identify the object they have selected. Once you get enough information about the item, I will tell you when you can make a guess.
+
+At the beginning of the game:
+
+You and the teacher will view the same static scene (image).
+The teacher will select an object from the scene and give you its first letter by saying, "I imagine something starting with [X]."
+Your goal is to:
+1) Ask informative and clear questions about the object.
+2) Successfully identify and locate the object in the scene.
+
+The target object is always visible in the image. Think carefully before asking questions or making guesses.
+
+
+Before you try to make a guess, there will be a defined number of turns where you are only allowed to ask questions.
+I will tell you when you are allowed to start making guesses.
+Please mind! You are not allowed to guess two times in a row. After each unsuccessful guess, you must ask a question.
+
+
+Scene Inspection:
+Use inspection tags to describe what you see:
+
+<inspect>
+    I am in a modern kitchen. I can see stainless steel appliances, granite countertops, and wooden cabinets. There's a window above the sink letting in natural light.
+</inspect>
+
+Strategic Thinking:
+Use thinking tags to analyze the situation:
+
+<thinking>
+    Given that the object starts with 'B' and is found in a kitchen, but isn't used for cooking, it might be related to cleaning or storage. The presence of a sink area suggests I should investigate cleaning implements.
+</thinking>
+
+Mental Maps:
+Use navigate tags to construct mental maps of your surroundings. This will come in handy when navigating the space.
+
+<navigate>
+    Current view: Kitchen entrance
+    - Left: Visible portion of countertop
+    - Center: Cabinet section
+    - Right: More kitchen appliances (refrigerator)
+    - Upper cabinets: Visible but distant
+</navigate>
+
+Every turn must include both inspection and thinking tags, as well as navigate tags, regardless of whether you're asking a question or making a guess.
+
+
+This is very important: The item will always be visible in the provided scene. Think thoroughly before you ask questions.
+Some of the things you are allowed to ask the teacher:
+
+1) What can you do with the item
+2) What does the item look like
+3) Where is the item usually located
+4) Is the item next to some other item
+5) What does the item look like
+
+You are allowed to ask both wh and yes/no questions to the teacher. You can ask anything that will help you identify the object.
+
+Every time you ask a question, you need to announce your question using a phrase QUESTION: Question goes here.
+
+When you make your guess, you need to use a phrase GUESS: guessed item here. Please mind that after GUESS: you only write the name of the item.
+This is followed by LOCATION: location of the item.
+
+Allowed locations:
+1) Top-Left.
+2) Top-Center.
+3) Top-Right.
+4) Middle-Left
+4) Middle-Center
+6) Middle-Right
+7) Bottom-Left.
+8) Bottom-Center.
+9) Bottom-Right.
+
+You always must use one of these locations.
+
+Once you identify the item, you need to successfully locate it in the image.
+
+Here are a couple of examples of how you might play this game.
+
+<example>
+    Teacher:
+    TASK: I imagine something starting with a letter [B].
+    You:
+
+    <inspect>
+        I'm in a kitchen with modern appliances. There's a sink area, countertops, and various cabinets.
+    </inspect>
+
+    <navigate>
+        Current view: Facing kitchen entrance
+        - Left side: Sink area with some cabinets above
+        - Center: Counter space with some appliances
+        - Right side: Not visible yet, need to look right
+    </navigate>
+
+    <thinking>
+        For objects starting with 'B' in a kitchen, I should consider both cooking implements and general kitchen items. I should look to the right to see more of the counter space.
+    </thinking>
+
+    QUESTION: Is this object an electrical appliance?
+
+    Here's another example of you can ask questions:
+
+    Teacher: Yes, it is electrical.
+
+    You:
+    <inspect>
+        I can now see a blender in the far corner of the counter.
+    </inspect>
+    <navigate>
+        - Far left (previous): Sink area
+        - Center-left (previous): Main counter with small appliances
+        - Center-right (previous): Coffee maker area
+        - Current view: Far right corner with blender
+    </navigate>
+
+    <thinking>
+        An electrical appliance used for food prep starting with 'B' strongly suggests the blender I can now see in the corner. The location and characteristics match all our criteria.
+    </thinking>
+
+    GUESS: Blender
+    LOCATION: Top-Right
+
+    Here's another example:
+    Teacher:
+    ANSWER: Yes, the item is commonly used when washing dishes in the kitchen.
+    You:
+    GUESS: Sponge.
+    LOCATION: Bottom-right.
+</example>
+
+Now let's begin the game! Think carefully before you make any questions or guesses. You are allowed to make your first guess at turn: $MIN_GUESS_TURN$. Do not make the guess before I tell you you are allowed to.
+

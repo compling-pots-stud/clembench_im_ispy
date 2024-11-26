@@ -1,0 +1,141 @@
+We are going to play a learning game. As a student, your job will be to ask informative and clear questions to the teacher in order to identify the object they have selected. Once you gain enough information from teacher and identify the item, you can make a guess.
+
+The goal of the game is to get as much information about an object in the scene, and then identify the object successfully.
+
+At the very beginning of the game, you and the teacher will be placed inside a 3D Scene. The teacher will then select an object in that scene, and give you the first letter of the object by saying "I imagine something starting with X".
+Your task afterwards is to ask questions to the teacher and try identify the object. You should also look at the scene and try to find it there.
+
+
+Navigation:
+
+Sometimes, the object will not be visible immediately. Hence, you should navigate through the scene in order to find it.
+The scene is 3-dimensional. This means that you are allowed to move and look around.
+In order to move you must use the following phrase: MOVE: direction.
+
+The directions of movement are explained below:
+1) forward - you move one step forward.
+2) left - you move one step to the left (lateral movement).
+3) right - you move one step to the right (lateral movement).
+4) backward - you move one step backward.
+
+In order to pan and look around the scene, you must use the following phrase: LOOK: Direction
+Looking will only slightly move your camera into the wanted direction:
+
+1) up - tilts your camera 30 degrees up.
+2) down - tilts your camera 30 degrees down.
+3) left - tilts your camera 30 degrees left.
+4) right - tilts your camrea 30 degrees right.
+
+As with a real body, you can also make sharp turns:
+1) left - turns 90 degrees to the left from your point of view.
+2) right - turns 90 degrees to the right from your point of view.
+3) behind - turns you in the opposite direction (180 degrees from your point of view).
+
+Be aware of your surroundings! If there is a wall or an object immediately in front of you, you might not be able to make some moves.
+If some of the commands cannot be executed, I will tell you, and you will be able to try again.
+
+
+Scene inspection:
+
+Use the <inspect> </inspect> to think about what you see in the scene.
+
+<example>
+    <inspect> We are in the kitchen. In front of me is a white fridge, a black stove, and a metal pan. </inspect>
+</example>
+
+Thinking:
+
+Use the <thinking> </thinking> tags to separate your thoughts from your actions. Use this space to think thoroughly about the situation you are in, and what the item could be.
+
+<example>
+
+    You:
+    QUESTION: Is that item normally used for preparing food?
+
+    Teacher:
+    ANSWER: No, the item is not used for preparing food.
+
+    You:
+    <inspect> We are in the kitchen. In front of me is a white fridge, a black stove, and a metal pan. </inspect>
+
+    <thinking>
+
+    However the item is not used for making food. It might be something that is used for washing the dishes.
+    I should probably look towards the sink.
+
+    </thinking>
+
+    LOOK: left.
+
+
+
+</example>
+
+
+
+
+
+
+Here are a couple of examples of what navigation can look like:
+
+<example>
+
+    Teacher:
+    ANSWER: No, the item isn't made of plastic.
+    You:
+    LOOK: right.
+
+</example>
+
+Guessing:
+
+Before you try to make a guess, there will be a defined number of turns where you are only allowed to ask questions.
+I will let you know when you are allowed to make a guess. Do not guess unless I tell you that you are allowed to.
+Please mind! You are not allowed to guess two times in a row. After each unsuccessful guess, you must ask a question.
+
+This is very important: The item will always be present in the scene. Think thoroughly before you ask questions. You are allowed to ask any questions that will help you deduct what the item is. If your questions are creative and informative enough, you will earn bonus points!
+
+You are allowed to ask both wh and yes/no questions to the teacher. You can ask anything that will help you identify the object.
+
+Every time you ask a question, you need to announce your question using a phrase QUESTION: Question goes here.
+
+When you make your guess, you need to use a phrase GUESS: guessed item here. Please mind that after GUESS: you only write the name of the item.
+This is followed by LOCATION: location of the item.
+
+Allowed locations:
+1) Top-Left.
+2) Top-Center.
+3) Top-Right.
+4) Middle-Left
+4) Middle-Center
+6) Middle-Right
+7) Bottom-Left.
+8) Bottom-Center.
+9) Bottom-Right.
+
+You always must use one of these locations.
+
+Once you identify the item, you need to successfully locate it in the image.
+
+Here are a couple of examples of how you might play this game.
+
+<example>
+    Teacher:
+    TASK: I imagine something starting with a letter [S].
+    You:
+    QUESTION: Is that item normally used for preparing food?
+
+    Teacher:
+    ANSWER: No, the item is not used for preparing food.
+    You:
+    QUESTION: Is the item used for cleaning dishes?
+
+    Teacher:
+    ANSWER: Yes, the item is commonly used when washing dishes in the kitchen.
+    You:
+    GUESS: Sponge.
+    LOCATION: Bottom-right.
+</example>
+
+Now let's begin the game! Think carefully before you make any questions or guesses. Do not make the guess before I tell you you are allowed to.
+
