@@ -9,14 +9,14 @@ from importlib_metadata import pass_none
 
 # from clembench.clemgame.metrics import METRIC_ABORTED, METRIC_LOSE
 
-sys.path.append(str(Path(__file__).parent.parent.parent))
+# sys.path.append(str(Path(__file__).parent.parent.parent))
 from backends import Model
 from clemgame import get_logger
 from clemgame.clemgame import GameBenchmark, GameMaster, DialogueGameMaster, Player
-from clembench.clemgame.metrics import *
+from clemgame.metrics import *
 from games.i_spy_final.player import Teacher, Learner
 from games.i_spy_final.scorer import ISpyScorer
-from clembench.games.i_spy_final.env_backends.navigation import Agent, get_quadrant
+from games.i_spy_final.env_backends.navigation import Agent, get_quadrant
 import json
 import os
 
@@ -93,7 +93,10 @@ class ISpyFinalGameMaster(DialogueGameMaster):
         self.learner_prompt = experiment["learner_prompt"]
         self.learner_mistake_prompt = experiment["learner_mistake_prompt"]
         self.learner_move_error_prompt = experiment["move_error_prompt"]
-
+        self.learner_sys = self.load_template('/Users/dicaristic/PycharmProjects/clembench_im/games/i_spy_final/resources/prompts/look/learner_sys.template')
+        self.teacher_sys = self.load_template(
+            '/Users/dicaristic/PycharmProjects/clembench_im/games/i_spy_final/resources/prompts/look/teacher_sys'
+            '.template')
         self.teacher_model = player_backends[0]
         self.learner_model = player_backends[1]
         self.move_error = None
@@ -186,6 +189,10 @@ class ISpyFinalGameMaster(DialogueGameMaster):
         Initialized before game start.
         """
         # add initial prompt and image to learner and teacher
+        # add system prompts
+        self.add_message(self.learner, self.learner_sys, 'system')
+        self.add_message(self.teacher, self.teacher_sys, 'system')
+
         self.task_msg = self._build_task_message()
         self.add_user_message(self.learner, self.learner_prompt + "\n" + self.task_msg, self.current_image)  # prompt + task
 
@@ -443,7 +450,7 @@ class ISpyFinalGameMaster(DialogueGameMaster):
             # Find out why?
             #Answer not correct if they don't start with the same letter
 
-            if not self.last_guess or self.last_guess[0] != self.selected_object.lower()[0]:
+            if not self.last_guess or self.last_guess[0].lower() != self.selected_object.lower()[0]:
 
                 self.teacher_error_count += 1
                 self.log_event(
@@ -504,7 +511,7 @@ class ISpyFinalGameMaster(DialogueGameMaster):
 
         # if the learner's last response was a question, teacher must provide answer
         if self.learner.last_is_question is True:
-            self.log_to_self("record_answer", f"ANSWER: {response['ANSWER']}" )
+            self.log_to_self("record_answer", f"ANSWER: {response.get('ANSWER', None)}" )
 
             if not "ANSWER" in response_keys:
                 self.teacher_error_count += 1
@@ -700,7 +707,7 @@ class ISpyFinalGameMaster(DialogueGameMaster):
         self._get_object_location()
 
         # was the initial letter of the obj correctly guessed
-        if self.last_guess[0] != self.selected_object.lower()[0]:
+        if self.last_guess[0].lower() != self.selected_object.lower()[0]:
             print('Error: Initial letter missed')
             self.messages_by_names[self.teacher.descriptor][-1]["content"] = \
                 (self.messages_by_names[self.teacher.descriptor][-1]["content"]
@@ -847,10 +854,12 @@ class ISpyFinalGameMaster(DialogueGameMaster):
         """
 
         if self.object_location:
-            message = f"The object is in the frame! It is located in {self.object_location}"
+            message = (f"Selected object: {self.selected_object}. The object is in the frame! It is located in"
+                       f" {self.object_location}")
         else:
             # print(f'Told the teacher to rotate to: {self.rotate_to}')
-            message = (f"The object is not present in this scene. To see it, the camera needs to turn "
+            message = (f"Selected object: {self.selected_object}. The object is not present in this scene. To see it, "
+                       f"the camera needs to turn "
                        f"{self.rotate_to}. Tell the learner to look in that direction.")
 
         self.messages_by_names[self.teacher.descriptor][-1]["content"] =\
@@ -993,12 +1002,12 @@ if __name__ == "__main__":
     from clemgame import benchmark
     from scripts.cli import read_model_specs
 
-    # model_specs: list[str] = ["gpt-4o-2024-08-06", "gpt-4o-2024-08-06"]
-    model_specs: list[str] = ["gpt-4o-2024-08-06", "gpt-4o-mini"]
+    # model_specs: list[str] = ["gpt-4o-2024-05-13", "gpt-4o-mini-2024-07-18"]
+    model_specs: list[str] = ["Llama-3.2-90B-Vision-Instruct-Turbo-Together.ai", "Llama-3.2-11B-Vision-Instruct-Turbo-Together.ai"]
 
     # model_specs: list[str] = ["llava-v1.5-7b-4096-preview", "llava-v1.5-7b-4096-preview"]
 
-    gen_args: dict[str: str] = {"temperature": 0.0, "max_tokens": 800}
+    gen_args: dict[str: str] = {"temperature": 0.0, "max_tokens": 1000}
 
     benchmark.run(
         game_name=GAME_NAME,

@@ -6,7 +6,7 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).parent.parent.parent))
 from clemgame.clemgame import GameScorer
-from clembench.clemgame.metrics import *
+from clemgame.metrics import *
 
 
 GAME_NAME = 'i_spy_final'
@@ -204,10 +204,6 @@ if __name__ == '__main__':
     from clemgame import benchmark
     from scripts.cli import read_model_specs
 
-    gen_args: dict[str: str] = {"temperature": 0.0, "max_tokens": 400}
-    instances_name: str = "instances"
-    results_dir: str = "results"
-    model_specs: list[str] = ["gpt-4o-2024-08-06", "gpt-4o-mini"]
 
     benchmark.score(
         game_name=GAME_NAME,

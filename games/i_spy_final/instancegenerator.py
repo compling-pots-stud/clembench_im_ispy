@@ -23,31 +23,30 @@ from clemgame.clemgame import GameInstanceGenerator
 
 TEMPLATES = {
     'static' : {
-        'TEACHER_TEMP' : '/Users/dicaristic/PycharmProjects/playpen_im/clembench/games/i_spy_final/resources/prompts/static/teacher.template',
-        'LEARNER_TEMP' : '/Users/dicaristic/PycharmProjects/playpen_im/clembench/games/i_spy_final/resources/prompts/static/learner.template',
-        'MISTAKE_TEMP': '/Users/dicaristic/PycharmProjects/playpen_im/clembench/games/i_spy_final/resources/prompts/look/learner_mistake.template',
-        'MOVE_ERR_TEMP': '/Users/dicaristic/PycharmProjects/playpen_im/clembench/games/i_spy_final/resources/prompts/look/move_err.template',
+        'TEACHER_TEMP' : '/Users/dicaristic/PycharmProjects/clembench_im/games/i_spy_final/resources/prompts/static/teacher.template',
+        'LEARNER_TEMP' : '/Users/dicaristic/PycharmProjects/clembench_im/games/i_spy_final/resources/prompts/static/learner.template',
+        'MISTAKE_TEMP': '/Users/dicaristic/PycharmProjects/clembench_im/games/i_spy_final/resources/prompts/look'
+                        '/learner_mistake.template',
+        'MOVE_ERR_TEMP': '/Users/dicaristic/PycharmProjects/clembench_im/games/i_spy_final/resources/prompts/look/move_err.template',
     },
     'look': {
-        'TEACHER_TEMP': '/Users/dicaristic/PycharmProjects/playpen_im/clembench/games/i_spy_final/resources/prompts/look/teacher.template',
-        'LEARNER_TEMP': '/Users/dicaristic/PycharmProjects/playpen_im/clembench/games/i_spy_final/resources/prompts/look/learner.template',
-        'MISTAKE_TEMP': '/Users/dicaristic/PycharmProjects/playpen_im/clembench/games/i_spy_final/resources/prompts/look/learner_mistake.template',
-        'MOVE_ERR_TEMP': '/Users/dicaristic/PycharmProjects/playpen_im/clembench/games/i_spy_final/resources/prompts/look/move_err.template',
+        'TEACHER_TEMP': '/Users/dicaristic/PycharmProjects/clembench_im/games/i_spy_final/resources/prompts/look/teacher.template',
+        'LEARNER_TEMP': '/Users/dicaristic/PycharmProjects/clembench_im/games/i_spy_final/resources/prompts/look/learner.template',
+        'MISTAKE_TEMP': '/Users/dicaristic/PycharmProjects/clembench_im/games/i_spy_final/resources/prompts/look/learner_mistake.template',
+        'MOVE_ERR_TEMP': '/Users/dicaristic/PycharmProjects/clembench_im/games/i_spy_final/resources/prompts/look/move_err.template',
     },
     'interactive': {
-        'TEACHER_TEMP': '/Users/dicaristic/PycharmProjects/playpen_im/clembench/games/i_spy_final/resources/prompts'
-                        '/interactive/teacher.template',
-        'LEARNER_TEMP': '/Users/dicaristic/PycharmProjects/playpen_im/clembench/games/i_spy_final/resources/prompts'
-                        '/interactive/learner.template',
-        'MISTAKE_TEMP': '/Users/dicaristic/PycharmProjects/playpen_im/clembench/games/i_spy_final/resources/prompts/look/learner_mistake.template',
-        'MOVE_ERR_TEMP': '/Users/dicaristic/PycharmProjects/playpen_im/clembench/games/i_spy_final/resources/prompts/look/move_err.template',
+        'TEACHER_TEMP': '/Users/dicaristic/PycharmProjects/clembench_im/games/i_spy_final/resources/prompts/interactive/teacher.template',
+        'LEARNER_TEMP': '/Users/dicaristic/PycharmProjects/clembench_im/games/i_spy_final/resources/prompts/interactive/learner.template',
+        'MISTAKE_TEMP': '/Users/dicaristic/PycharmProjects/clembench_im/games/i_spy_final/resources/prompts/look/learner_mistake.template',
+        'MOVE_ERR_TEMP': '/Users/dicaristic/PycharmProjects/clembench_im/games/i_spy_final/resources/prompts/look/move_err.template',
     }
 
 }
 
 
 GAME_NAME = 'i_spy_final'
-NUM_INSTANCES = 1
+NUM_INSTANCES = 15
 SEED = 58
 MIN_GUESS_TURN = 5
 K = 10
@@ -64,7 +63,7 @@ OBJECT_EXCLUSION_LIST = ['Bathtub', 'Blinds', 'Bed', 'BathtubBasin', 'Cabinet', 
                          'Sofa', 'TargetCircle', 'TomatoSliced', 'Window']
 
 GAME_MODES = ['static', 'look', 'interactive']
-
+# GAME_MODES = ['look']
 def split_camel_case(word):
     return re.sub(r'([a-z])([A-Z])', r'\1 \2', word)
 

@@ -1,12 +1,12 @@
 import json
-from multiprocessing.managers import Value
 from os import environ
-from clembench.games.i_spy_interactive.env_backends.agents import AI2ThorEnvironment  # Import your specific agent classes
+from games.i_spy_interactive.env_backends.agents import AI2ThorEnvironment  # Import your specific agent classes
 from typing import Dict, List, Any
 import numpy as np
 
-CONFIG_PATH = ("/Users/dicaristic/PycharmProjects/playpen_im/clembench/games/i_spy_look/env_backends/configs"
+CONFIG_PATH = ("/Users/dicaristic/PycharmProjects/clembench_im/games/i_spy_look/env_backends/configs"
                "/environments.json")
+
 MOVE_DIRECTIONS = {
     "forward" : True,
     "backward": True,
