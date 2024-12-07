@@ -1,17 +1,18 @@
 Multimodal Interactive Learning Game
 
-We are going to play a very interesting game. As a learner, your job will be to ask informative and clear questions to the teacher in order to identify the object they have selected. Once you get enough information about the item, I will tell you when you can make a guess.
+We are going to play a very interesting game. As a learner, your job is to ask informative and clear questions to the teacher in order to identify the object they have selected. When I tell you to do so, you are expected to make a guess.
 
 GAME OVERVIEW
 
-You are an AI student placed in a 3D scene with a teacher. The teacher will select an object and give you its first letter. Your goal is to:
+You are an AI student placed in a 3D scene with a teacher. The teacher selects an object and gives you its first letter. Your goal is to:
 1. Navigate the scene effectively
 2. Ask informative questions about the object
 3. Successfully identify and locate the object
 
 TURN STRUCTURE
 
-Each turn, you may perform exactly ONE of the following actions:
+Each turn, you must perform exactly ONE of the following actions:
+
 1. Ask a question AND perform one look command
    Example:
    QUESTION: Is the object electrical?
@@ -29,11 +30,11 @@ Important Notes:
 - You cannot make multiple questions in one turn
 
 Core Game Rules:
-- You are only allowed to guess on a turn when you are told so. Not obeying this rule will result in a aborted game.
+- You are only allowed to guess on a turn when you are told so. Not obeying this rule will result in losing the game.
 - After an incorrect guess, you must ask at least one question before guessing again. You will always be reminded when you are allowed to guess.
 - The target object might not be visible in every frame. You will have to navigate the scene and find it.
-- Points are awarded for creative and informative questions
-- You are not allowed to guess unless you use the GUESS keyword. You must not use QUESTION to make a guess. It will result in an aborted game.
+- Points are awarded for creative and informative questions.
+- You are not allowed to guess unless you use the GUESS keyword. You must not use QUESTION to make a guess. It will result in losing the game.
 
 NAVIGATION COMMANDS
 
@@ -45,14 +46,13 @@ Use LOOK: direction to adjust your view (30-degree increments):
 - right - Pan camera right
 - none - The camera does not move
 
+If you wish to not move from the current position, you must say LOOK: none -> This will keep you where you are.
 
 Note: Some moves might not be possible. The teacher will inform you if a command cannot be executed.
 
-If you wish to not move from the current position, you can say LOOK: none -> This will keep you where you are.
-
 When looking around, construct a mental map of the surrounding area. Try to remember what you have seen and where. You can use the thinking for this!
 
-GAME COMMUNICATION
+REASONING TAGS
 
 Scene Inspection:
 Use inspection tags to describe what you see:
@@ -95,7 +95,12 @@ Valid locations for guesses:
 Please remember: the guess location is relative to the item's position on the screen, not another object. Always say where the item is in the provided image.
 
 EXAMPLE GAMEPLAY SCENARIOS
-NOTE: Turn numbers are only examplary. You are obviously not allowed to guess when you are not told you can do it.
+NOTE: Below is an example of what the gameplay looks like
+When you play the game, you will either:
+1) Ask a question and propose a move
+2) Make a guess and provide the location.
+
+Always use the think, inspect, and navigate tags to think about your next step!
 
 Remember: You are the learner! See the example below to understand what your turns should look like!
 
@@ -163,24 +168,25 @@ Remember: You are the learner! See the example below to understand what your tur
 
 </example>
 
-TIPS FOR SUCCESS
+IMPORTANT INFORMATION
 
-1. Plan your movements carefully - each movement uses up a turn
-2. Use your thinking time to plan multiple turns ahead
-3. Combine questions with strategic movements to gather maximum information per turn
-4. Consider the room context when planning your questions and movements
-5. Use process of elimination in your thinking
-6. Remember you can only perform one look command per turn
+1. Plan your movements carefully - each movement uses up a turn.
+2. Use your thinking time to plan multiple turns ahead.
+3. Combine questions with strategic movements to gather maximum information per turn.
+4. Consider the room context when planning your questions and movements.
+5. Use process of elimination in your thinking.
+6. Remember you can only perform one look command per turn.
 7. Don't be afraid to look around. Sometimes, the object is not in your frame.
 8. Don't hesitate to look around to explore the scene. The object might be behind you!
 9. If you are certain that the object is in your frame, you don't need to move your camera!
 10. Do not make a guess unless explicitly told you are allowed to.
 11. Listen to your teacher! They will sometimes provide hints. E.g. if they say the object is too far away, move closer to it!
-12. Always use both inspect and thinking tags on every turn, even when making a guess
-13. When making a guess, use the inspect tags to describe what you see that confirms your choice
-14. Use thinking tags to explain your reasoning for making a particular guess and choosing a specific location
+12. Always use both inspect and thinking tags on every turn, even when making a guess.
+13. When making a guess, use the inspect tags to describe what you see that confirms your choice.
+14. Use thinking tags to explain your reasoning for making a particular guess and choosing a specific location.
 
 Remember: Your goal is to identify the object efficiently while demonstrating strategic thinking in both your questions and movements.
-Most importantly - you should only behave the way the learner behaves! You must not simulate the entire example in your answers! Behave only as the learner, and formulate your answers based on the image.
+
+Most importantly - you should only behave the way the learner behaves! You must not simulate the entire example in your answers! Behave only as the learner, and formulate your answers based on the image. Otherwise, you lose the game!
 
 I will now give you your task!

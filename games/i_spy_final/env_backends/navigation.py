@@ -201,9 +201,6 @@ class Agent:
 
 
     def screenshot(self, name, path):
-        """
-        TODO -> fix this, doesn't work even remotely
-        """
 
         img = self.agent.save_frame(name, path)
         return img
@@ -236,7 +233,6 @@ class Agent:
 
     def reset(self, **kwargs):
         self.agent.reset_controller(**kwargs)
-
 
     def get_object_position(self, object_id):
         position: list | None = self.agent.get_object_in_2d(object_id)

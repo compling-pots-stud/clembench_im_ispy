@@ -145,12 +145,29 @@ class ISpyFinalGameMaster(DialogueGameMaster):
 
         self.n_turns: int = 0
 
-        # initialize environment in the correct position
-        self.env_agent.reset(scene=self.scene)
-        self.env_agent.teleport(position=self.starting_position,
-                                rotation=self.starting_rotation,
-                                horizon=self.starting_horizon)
+        while True:  # Retry loop
+            try:
+                # Initialize environment in the correct position
+                self.env_agent.reset(scene=self.scene)
+                self.env_agent.teleport(
+                    position=self.starting_position,
+                    rotation=self.starting_rotation,
+                    horizon=self.starting_horizon
+                )
+                break  # Exit the loop if initialization succeeds
 
+            except Exception as e:
+                print(f"Error occurred during initialization: {e}")
+                print("Reinitializing the agent...")
+                ISpyFinalGameMaster.env_agent = Agent("AI2THOR")
+                logger.info("Environment agent initialized")
+
+                self.env_agent.reset(scene=self.scene)
+                self.env_agent.teleport(
+                    position=self.starting_position,
+                    rotation=self.starting_rotation,
+                    horizon=self.starting_horizon
+                )
 
         self.current_image = [self._save_frame()]
 
@@ -1003,7 +1020,8 @@ if __name__ == "__main__":
     from scripts.cli import read_model_specs
 
     # model_specs: list[str] = ["gpt-4o-2024-05-13", "gpt-4o-mini-2024-07-18"]
-    model_specs: list[str] = ["Llama-3.2-90B-Vision-Instruct-Turbo-Together.ai", "Llama-3.2-11B-Vision-Instruct-Turbo-Together.ai"]
+    # model_specs: list[str] = ["Llama-3.2-90B-Vision-Instruct-Turbo-Together.ai", "Llama-3.2-11B-Vision-Instruct-Turbo-Together.ai"]
+    model_specs: list[str] = ["gpt-4o-2024-05-13", "Llama-3.2-11B-Vision-Instruct-Turbo-Together.ai"]
 
     # model_specs: list[str] = ["llava-v1.5-7b-4096-preview", "llava-v1.5-7b-4096-preview"]
 

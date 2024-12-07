@@ -58,7 +58,7 @@ class BaseEnvironment:
         else:
             return "Controller not initialized."
 
-    def save_frame(self):
+    def save_frame(self, name, path):
         """Take the screenshot of the current frame"""
         raise NotImplementedError("Subclasses must implement this method.")
 
@@ -202,7 +202,6 @@ class AI2ThorEnvironment(BaseEnvironment):
 
         positions = self.controller.step(action="GetReachablePositions").metadata["actionReturn"]
         return positions
-
 
     def get_metadata(self):
         """returns metadata"""
