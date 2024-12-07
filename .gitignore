@@ -196,3 +196,7 @@ cython_debug/
 /games/i_spy/notebooks/
 /games/i_spy/resources/images/
 /games/i_spy/resources/metadata/
+/games/i_spy_final/resources/metadata/
+/games/i_spy_final/resources/images/
+/games/i_spy_final/resources/backups/
+/games/i_spy_final/resources/notebooks/
