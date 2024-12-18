@@ -20,6 +20,10 @@ from games.i_spy_final.env_backends.navigation import Agent, get_quadrant
 import json
 import os
 
+sys.path.append(str(Path(__file__).parent.parent.parent))
+# Define the base path relative to this file's location
+BASE_PATH = Path(__file__).parent.parent.parent
+
 IMAGE_OUTPUT_PATH = 'resources/images'
 METADATA_OUTPUT_PATH='resources/metadata'
 MAX_TURNS = 10
@@ -93,10 +97,10 @@ class ISpyFinalGameMaster(DialogueGameMaster):
         self.learner_prompt = experiment["learner_prompt"]
         self.learner_mistake_prompt = experiment["learner_mistake_prompt"]
         self.learner_move_error_prompt = experiment["move_error_prompt"]
-        self.learner_sys = self.load_template('/Users/dicaristic/PycharmProjects/clembench_im/games/i_spy_final/resources/prompts/look/learner_sys.template')
-        self.teacher_sys = self.load_template(
-            '/Users/dicaristic/PycharmProjects/clembench_im/games/i_spy_final/resources/prompts/look/teacher_sys'
-            '.template')
+        self.learner_sys = self.load_template(
+            str(BASE_PATH / 'games/i_spy_final/resources/prompts/look/learner_sys.template'))
+        self.teacher_sys = self.load_template(str(BASE_PATH /
+                                                  'games/i_spy_final/resources/prompts/look/teacher_sys.template'))
         self.teacher_model = player_backends[0]
         self.learner_model = player_backends[1]
         self.move_error = None
