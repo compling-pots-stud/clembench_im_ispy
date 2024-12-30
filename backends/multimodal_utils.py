@@ -499,3 +499,120 @@ def generate_idefics_response(**response_kwargs) -> str:
     generated_text = processor.batch_decode(generated_ids, skip_special_tokens=True)
     
     return generated_text[0]
+
+
+
+"""
+##### QWEN TYPE MODELS #####
+"""
+
+def generate_qwen_vl_messages(messages: List[str]) -> Tuple[List, List]:
+    """Generates Qwen-VL formatted messages and image inputs from a list of messages.
+
+    Args:
+        messages (List[Dict]): A list of message dictionaries containing user, assistant, and optionally images.
+
+    Returns:
+        Tuple[List, List]: A tuple containing:
+            - A list of Qwen-VL formatted messages.
+            - A list of image inputs extracted from the messages.
+    """
+    qwen_messages = []
+    image_inputs = []
+
+    for message in messages:
+        message_dict = {}
+        message_dict['role'] = message['role']
+        message_dict['content'] = []
+
+        if message['role'] == 'user':
+            if 'image' in message:
+                if isinstance(message['image'], str):
+                    # Single image
+                    message_dict['content'].append({"type": "image"})
+                    image_inputs.append(message['image'])
+                elif isinstance(message['image'], list):
+                    # Multiple images
+                    for img in message['image']:
+                        message_dict['content'].append({"type": "image"})
+                        image_inputs.append(img)
+                else:
+                    raise ValueError("Invalid image type in message - should be str or List[str]")
+
+            # Add user text
+            if 'content' in message:
+                message_dict['content'].append({"type": "text", "text": message['content']})
+
+            qwen_messages.append(message_dict)
+
+        elif message['role'] == 'assistant':
+            # Add assistant response
+            message_dict['content'].append({"type": "text", "text": message['content']})
+            qwen_messages.append(message_dict)
+
+        elif message['role'] == 'system':
+            # Qwen-VL does not process system messages directly, so skip
+            continue
+        else:
+            raise ValueError(f"Invalid role: {message['role']}. Expected 'user', 'assistant', or 'system'.")
+
+    if qwen_messages and qwen_messages[-1]['role'] == 'user':
+        content = qwen_messages[-1]['content']
+        contains_image = any(item["type"] == "image" for item in content)
+
+        if not contains_image:
+            blank_image = Image.new("RGB", (128, 128), color="white")
+            image_inputs.append(blank_image)
+            qwen_messages[-1]['content'].append({"type": "image"})
+
+    return qwen_messages, image_inputs
+
+def generate_qwen_vl_prompt_text(messages: List[str], **prompt_kwargs) -> str:
+    qwen_messages, _ = generate_qwen_vl_messages(messages=messages)
+    processor = prompt_kwargs['processor']
+    prompt = processor.apply_chat_template(qwen_messages, add_generation_prompt=True)
+
+    return prompt
+
+
+def generate_qwen_vl_response(**response_kwargs) -> str:
+    """Generates a response from the Qwen-vl model based on the provided messages and configuration.
+
+    Args:
+        **response_kwargs: A dictionary containing the following keys:
+            - messages (List[str]): A list of message dictionaries.
+            - device (str): The device to which the image tensors will be moved (e.g., 'cuda' or 'cpu').
+            - max_tokens (int): The maximum number of tokens to generate.
+            - model: The model instance used for generating responses.
+            - processor: The processor instance used for processing images.
+
+    Returns:
+        str: The generated response from the LLAVA model.
+    """
+
+    messages = response_kwargs['messages']
+    device = response_kwargs['device']
+    max_tokens = response_kwargs['max_tokens']
+    model = response_kwargs['model']
+    processor = response_kwargs['processor']
+    do_sample = response_kwargs['do_sample']
+
+    qwen_messages, image_paths = generate_qwen_vl_messages(messages=messages)
+    prompt = processor.apply_chat_template(qwen_messages, add_generation_prompt=True)
+
+    # Process images
+    processed_images = []
+    for image in image_paths:
+        if type(image) == str:
+            processed_images.append(load_image(image))
+        else:
+            processed_images.append(image)
+
+    inputs = processor(images=processed_images, text=prompt, return_tensors='pt').to(device)
+
+    output_ids = model.generate(**inputs, max_new_tokens=max_tokens, do_sample=do_sample)
+    generated_ids = [output_ids[len(input_ids):] for input_ids, output_ids in zip(inputs.input_ids, output_ids)]
+
+    response = processor.batch_decode(generated_ids, skip_special_tokens=True, clean_up_tokenization_spaces=True)
+
+    return response

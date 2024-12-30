@@ -151,6 +151,7 @@ class ISpyFinalGameMaster(DialogueGameMaster):
 
         while True:  # Retry loop
             try:
+                print('are we here?')
                 # Initialize environment in the correct position
                 self.env_agent.reset(scene=self.scene)
                 self.env_agent.teleport(
@@ -1025,7 +1026,7 @@ if __name__ == "__main__":
 
     # model_specs: list[str] = ["gpt-4o-2024-05-13", "gpt-4o-mini-2024-07-18"]
     # model_specs: list[str] = ["Llama-3.2-90B-Vision-Instruct-Turbo-Together.ai", "Llama-3.2-11B-Vision-Instruct-Turbo-Together.ai"]
-    model_specs: list[str] = ["gpt-4o-2024-05-13", "Llama-3.2-11B-Vision-Instruct-Turbo-Together.ai"]
+    model_specs: list[str] = ["gpt-4o-2024-05-13", "qwen2-vl-7b-instruct"]
 
     # model_specs: list[str] = ["llava-v1.5-7b-4096-preview", "llava-v1.5-7b-4096-preview"]
 

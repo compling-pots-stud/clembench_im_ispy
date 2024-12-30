@@ -44,7 +44,6 @@ from clemgame.clemgame import GameInstanceGenerator
 #
 # }
 
-sys.path.append(str(Path(__file__).parent.parent.parent))
 from clemgame.clemgame import GameInstanceGenerator
 
 # Define the base path relative to this file's location
@@ -73,7 +72,7 @@ TEMPLATES = {
 
 
 GAME_NAME = 'i_spy_final'
-NUM_INSTANCES = 10
+NUM_INSTANCES = 12
 SEED = 58
 MIN_GUESS_TURN = 5
 K = 15
@@ -106,16 +105,37 @@ def split_words_only_if_camel_case(word_list):
 # look at SD
 # maybe the same model plays both sides?
 # the final judge could be another player?
+# def get_scenes() -> list[str]:
+#     kitchens = [f"FloorPlan{i}" for i in range(1, 31)]
+#     living_rooms = [f"FloorPlan{200 + i}" for i in range(1, 31)]
+#     bedrooms = [f"FloorPlan{300 + i}" for i in range(1, 31)]
+#     bathrooms = [f"FloorPlan{400 + i}" for i in range(1, 31)]
+#
+#     scenes = kitchens + living_rooms + bedrooms + bathrooms
+#     scenes = [scene for scene in scenes if scene != 'FloorPlan8']
+#
+#     # scenes = ["FloorPlan1", "FloorPlan201","FloorPlan301","FloorPlan401","FloorPlan21","FloorPlan211","FloorPlan311"]
+#     print(scenes)
+#     return scenes
+
 def get_scenes() -> list[str]:
     kitchens = [f"FloorPlan{i}" for i in range(1, 31)]
     living_rooms = [f"FloorPlan{200 + i}" for i in range(1, 31)]
     bedrooms = [f"FloorPlan{300 + i}" for i in range(1, 31)]
     bathrooms = [f"FloorPlan{400 + i}" for i in range(1, 31)]
 
-    scenes = kitchens + living_rooms + bedrooms + bathrooms
-    scenes = [scene for scene in scenes if scene != 'FloorPlan8']
+    # Exclude FloorPlan8 from kitchens
+    kitchens = [scene for scene in kitchens if scene != 'FloorPlan8']
 
-    # scenes = ["FloorPlan1", "FloorPlan201","FloorPlan301","FloorPlan401","FloorPlan21","FloorPlan211","FloorPlan311"]
+    # Select 3 random examples from each room type
+    selected_kitchens = random.sample(kitchens, 3)
+    selected_living_rooms = random.sample(living_rooms, 3)
+    selected_bedrooms = random.sample(bedrooms, 3)
+    selected_bathrooms = random.sample(bathrooms, 3)
+
+    # Combine all selected scenes
+    scenes = selected_kitchens + selected_living_rooms + selected_bedrooms + selected_bathrooms
+
     print(scenes)
     return scenes
 
@@ -133,7 +153,6 @@ class IspyFinalInstanceGenerator(GameInstanceGenerator):
         scenes = get_scenes()
 
         for game_mode in GAME_MODES:
-
             # load prompts
             init_teacher_prompt = self.load_template(TEMPLATES[game_mode]['TEACHER_TEMP'])
             init_learner_prompt = self.load_template(TEMPLATES[game_mode]['LEARNER_TEMP'])
@@ -148,7 +167,6 @@ class IspyFinalInstanceGenerator(GameInstanceGenerator):
 
 
             game_id = 0
-
             for i in range(NUM_INSTANCES):
                 if i == 0:
                     controller = Controller(
@@ -168,8 +186,8 @@ class IspyFinalInstanceGenerator(GameInstanceGenerator):
                         width=800,
                         height=600,
                         fieldOfView=90,
-                        headless=True
                     )
+
                 else:
                     controller.reset(scene=scenes[i])  # change to new scene
                     # controller.step(action="RandomizeMaterials") # used to randomize materials so that scenes look different.
