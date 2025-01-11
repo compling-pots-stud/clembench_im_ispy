@@ -1,4 +1,5 @@
 from ai2thor.controller import Controller
+from ai2thor.platform import CloudRendering
 from PIL import Image
 import os
 
@@ -15,6 +16,7 @@ and up down to controll the pitch
 
 IMAGE_OUTPUT_PATH = ""
 ASPECT_RATIO = (512,307)
+os.environ['DISPLAY'] = ':0'
 
 class BaseEnvironment:
     def __init__(self, **config):

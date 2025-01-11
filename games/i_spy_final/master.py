@@ -9,7 +9,7 @@ from importlib_metadata import pass_none
 
 # from clembench.clemgame.metrics import METRIC_ABORTED, METRIC_LOSE
 
-# sys.path.append(str(Path(__file__).parent.parent.parent))
+sys.path.append(str(Path(__file__).parent.parent.parent))
 from backends import Model
 from clemgame import get_logger
 from clemgame.clemgame import GameBenchmark, GameMaster, DialogueGameMaster, Player
@@ -20,7 +20,7 @@ from games.i_spy_final.env_backends.navigation import Agent, get_quadrant
 import json
 import os
 
-sys.path.append(str(Path(__file__).parent.parent.parent))
+# sys.path.append(str(Path(__file__).parent.parent.parent))
 # Define the base path relative to this file's location
 BASE_PATH = Path(__file__).parent.parent.parent
 
@@ -1026,7 +1026,7 @@ if __name__ == "__main__":
 
     # model_specs: list[str] = ["gpt-4o-2024-05-13", "gpt-4o-mini-2024-07-18"]
     # model_specs: list[str] = ["Llama-3.2-90B-Vision-Instruct-Turbo-Together.ai", "Llama-3.2-11B-Vision-Instruct-Turbo-Together.ai"]
-    model_specs: list[str] = ["gpt-4o-2024-05-13", "qwen2-vl-7b-instruct"]
+    model_specs: list[str] = ["Qwen2-VL-7B-Instruct", "Qwen2-VL-7B-Instruct"]
 
     # model_specs: list[str] = ["llava-v1.5-7b-4096-preview", "llava-v1.5-7b-4096-preview"]
 

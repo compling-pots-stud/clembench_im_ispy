@@ -3,9 +3,13 @@ from os import environ
 from games.i_spy_interactive.env_backends.agents import AI2ThorEnvironment  # Import your specific agent classes
 from typing import Dict, List, Any
 import numpy as np
+from pathlib import Path
 
-CONFIG_PATH = ("/Users/dicaristic/PycharmProjects/clembench_im/games/i_spy_look/env_backends/configs"
-               "/environments.json")
+BASE_PATH = Path(__file__).parent.parent.parent
+
+CONFIG_PATH = str(BASE_PATH/'i_spy_final/env_backends/configs/environments.json')
+# CONFIG_PATH = ("/Users/dicaristic/PycharmProjects/clembench_im/games/i_spy_look/env_backends/configs"
+#                "/environments.json")
 
 MOVE_DIRECTIONS = {
     "forward" : True,

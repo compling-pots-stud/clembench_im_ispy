@@ -1871,5 +1871,27 @@
     "release_date": "2024-08-30",
     "open_weight": true,
     "parameters": "8B"
+  },
+    {
+    "model_name": "Ovis1.6-Gemma2-9B",
+    "backend": "huggingface_multimodal",
+    "huggingface_id": "AIDC-AI/Ovis1.6-Gemma2-9B",
+    "model_class": "transformers.AutoModelForCausalLM",
+    "model_config": {
+      "low_cpu_mem_usage": true,
+      "device_map": "auto",
+      "torch_dtype":"auto"
+    },
+    "eos_to_cull": "<end_of_turn>\\n",
+    "processor_class": "transformers.AutoProcessor",
+    "processor_config": {},
+    "prompt": "backends.multimodal_utils.generate_ovis_prompt",
+    "response": "backends.multimodal_utils.generate_ovis_response",
+    "output_split_prefix": "<start_of_turn>model\n",
+    "do_sample": true,
+    "supports_multiple_images": true,
+    "release_date": "2024-09-16",
+    "open_weight": true,
+    "parameters": "9B"
   }
 ]

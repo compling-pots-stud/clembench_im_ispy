@@ -12,7 +12,8 @@
     "renderInstanceSegmentation":true,
     "width": 800,
     "height": 600,
-    "fieldOfView": 90
+    "fieldOfView": 90,
+    "platform": "CloudRendering"
   }
 
 
