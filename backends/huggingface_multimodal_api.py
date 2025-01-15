@@ -133,6 +133,7 @@ def load_processor(model_spec: backends.ModelSpec):
     Raises:
         ImportError: If the processor type cannot be imported.
     """
+
     hf_model_str = model_spec['huggingface_id']  # Get the model name
     processor_class_str = model_spec['processor_class']  # Processor type - AutoProcessor/AutoTokenizer
     processor_config = model_spec['processor_config']  # Processor kwargs
@@ -235,11 +236,16 @@ class HuggingfaceMultimodalModel(backends.Model):
 
         # Load instance variable used for evey model
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        self.processor = load_processor(model_spec)
-        self.multimodal_model = load_model(model_spec)
-        self.context_size = get_context_limit(model_spec)
-        self.model_name = model_spec['model_name']
 
+        # needed for models like Ovis - they do not have a predefined processor that is loaded separately
+        self.model_name = model_spec['model_name']
+        self.multimodal_model = load_model(model_spec)
+
+        if self.model_name == 'Ovis1.6-Gemma2-9B' or self.model_name == 'Ovis1.5-Llama3-8B':
+            self.processor = self.multimodal_model.get_text_tokenizer()
+        else:
+            self.processor = load_processor(model_spec)
+        self.context_size = get_context_limit(model_spec)
         self.split_prefix = model_spec.output_split_prefix if hasattr(model_spec, 'output_split_prefix') else ""
         self.template = model_spec.custom_chat_template if hasattr(model_spec, 'custom_chat_template') else None
         self.premade_template = True if hasattr(model_spec, 'premade_chat_template') else False
@@ -248,6 +254,7 @@ class HuggingfaceMultimodalModel(backends.Model):
         self.do_sample = model_spec.do_sample if hasattr(model_spec, 'do_sample') else None
         self.prompt_method = model_spec.prompt if hasattr(model_spec, 'prompt') else None
         self.response_method = model_spec.response if hasattr(model_spec, 'response') else None 
+        self.model_id = model_spec.huggingface_id
 
     def generate_response(self, messages: List[Dict]) -> Tuple[Any, Any, str]:
         """Generate a response based on the provided messages.
@@ -277,6 +284,7 @@ class HuggingfaceMultimodalModel(backends.Model):
             'model': self.multimodal_model,
             'processor': self.processor,
             'device': self.device,
+            'model_id': self.model_id
         }
         prompt_text = ""
         # Get input prompt by applying jinja template, if template is provided
@@ -317,7 +325,9 @@ class HuggingfaceMultimodalModel(backends.Model):
             'do_sample': self.do_sample,
             'messages': messages,
             'max_tokens': self.get_max_tokens(),
-            'model_name': self.model_name
+            'model_name': self.model_name,
+            'template': self.template,
+            'model_id': self.model_id
         }
         generated_response = response_method(**response_kwargs)
 

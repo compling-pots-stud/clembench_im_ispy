@@ -12,6 +12,8 @@ from torchvision.transforms.functional import InterpolationMode
 from transformers.image_utils import load_image
 import requests
 from io import BytesIO
+from transformers.models.qwen2_vl.image_processing_qwen2_vl import Qwen2VLImageProcessor
+from jinja2 import Template
 
 """
 ##### INTERNVL2 TYPE MODELS #####
@@ -42,7 +44,7 @@ def generate_history_internvl2(messages: List[str]) -> Tuple[List[Tuple], str]:
             continue # Skip the system message, Not passed to the model. Ref - https://huggingface.co/OpenGVLab/InternVL2-40B 
         elif msg['role'] == 'user':
             if 'image' in msg:
-                user_message = f"</image>\n{msg['content']}" # Add <image> token if image is passed in this instance.
+                user_message = f"<image>\n{msg['content']}" # Add <image> token if image is passed in this instance.
             else:
                 user_message = msg['content']
         elif msg['role'] == 'assistant':
@@ -69,7 +71,7 @@ def split_model(model_name):
     device_map = {}
     world_size = torch.cuda.device_count()
     num_layers = {
-        'InternVL2-1B': 24, 'InternVL2-2B': 24, 'InternVL2-4B': 32, 'InternVL2-8B': 32,
+        'InternVL2-1B': 24, 'InternVL2-2B': 24, 'InternVL2-4B': 32, 'InternVL2-8B': 32, 'InternVL2-8B-MPO': 32,
         'InternVL2-26B': 48, 'InternVL2-40B': 60, 'InternVL2-Llama3-76B': 80}[model_name]
     # Since the first GPU will be used for ViT, treat it as half a GPU.
     num_layers_per_gpu = math.ceil(num_layers / (world_size - 0.5))
@@ -409,7 +411,7 @@ def generate_llava_response(**response_kwargs) -> str:
     inputs = processor(images=processed_images, text=prompt, return_tensors='pt').to(device)
 
     output = model.generate(**inputs, max_new_tokens=max_tokens, do_sample=do_sample)
-    response = processor.decode(output[0], skip_special_tokens=True)
+    response = processor.decode(output[0][2:], skip_special_tokens=True)
 
     return response
 
@@ -440,12 +442,12 @@ def generate_idefics_prompt_text(messages: List[str], **prompt_kwargs) -> str:
                         prompt_text += img
                 else:
                     prompt_text += msg['image'][0]
-            prompt_text += "<end_of_utterance>"          
+            prompt_text += "<end_of_utterance>"
         elif msg['role'] == 'assistant':
             prompt_text += f" Assistant: {msg['content']} <end_of_utterance>"
         else:
             raise ValueError(f"Invalid role: {msg['role']}. Expected 'user', 'system', or 'assistant'.")
-            
+
     return prompt_text
 
 def generate_idefics_response(**response_kwargs) -> str:
@@ -481,8 +483,8 @@ def generate_idefics_response(**response_kwargs) -> str:
                         input_messages.append(loaded_image)
                 else:
                     loaded_image = load_image(msg['image'][0])
-                    input_messages.append(loaded_image)      
-            input_messages.append("<end_of_utterance>")         
+                    input_messages.append(loaded_image)
+            input_messages.append("<end_of_utterance>")
         elif msg['role'] == 'assistant':
             input_messages.append(f"\nAssistant: {msg['content']} <end_of_utterance>")
         else:
@@ -497,7 +499,7 @@ def generate_idefics_response(**response_kwargs) -> str:
 
     generated_ids = model.generate(**inputs, eos_token_id=exit_condition, bad_words_ids=bad_words_ids, max_length=max_tokens)
     generated_text = processor.batch_decode(generated_ids, skip_special_tokens=True)
-    
+
     return generated_text[0]
 
 
@@ -615,14 +617,14 @@ def generate_qwen_vl_response(**response_kwargs) -> str:
 
     response = processor.batch_decode(generated_ids, skip_special_tokens=True, clean_up_tokenization_spaces=True)
 
-    return response
+    return response[0]
 
 
 """
 ##### OVIS GEMMA MODELS #####
 """
 
-def generate_ovis_messages(messages: List[str]) -> Tuple[List, List]:
+def generate_ovis_messages(messages: List[Dict], **prompt_kwargs) -> Tuple[List, List]:
     """Generates Ovis-1.6 Gemma 9b formatted messages and image inputs from a list of messages.
 
 
@@ -643,33 +645,30 @@ def generate_ovis_messages(messages: List[str]) -> Tuple[List, List]:
     # content is provided as a str under value key inside the conversation/msg dict.
     # conversation needs to be a list of dictionaries.
 
-    ovis_messages  = []
+    ovis_messages = []
     image_inputs = []
+
     for message in messages:
         message_dict = {}
-        message_dict['from'] = 'human' if message['role'] == 'user' else 'gpt'
-        value = ''
-        # message_dict['value'] =
+        value = ""
 
-        if message['role'] == 'user':
-            if isinstance(message['image'], str):
-                image_inputs.append(message['image'])
-            elif isinstance(message['image'], list):
-                for img in message['image']:
-                    image_inputs.append(img)
+        if message.get('role') == 'system':
+            continue
+
+        if message.get('role') == 'user':
+            message_dict['from'] = 'human'
+
+            # Check if the 'image' key exists and handle it accordingly
+            image_field = message.get('image', None)
+            if isinstance(image_field, str):
+                value += '<image>\n'
+                image_inputs.append(image_field)
+            elif isinstance(image_field, list):
+                for inx, val in enumerate(image_field):
+                    value += f"Image {inx}: <image>\n"
+                    image_inputs.append(val)
             else:
-                raise ValueError("Invalid image type in message - should be str or List[str]")
-
-            if "image" in message:
-                if isinstance(message['image'], str):
-                    value += '<image>\n'
-                elif isinstance(message['image'], list):
-                    for inx, val in enumerate(message['image']):
-                        value += f"Image {inx}: <image>\n"
-
-            else:
-                # check if this is needed to be created here
-                # either way, a blank image needs to be passed if no img input
+                # Create a blank image if no valid 'image' field is found
                 blank_image = Image.new("RGB", (128, 128), color="white")
                 image_inputs.append(blank_image)
                 value += '<image>\n'
@@ -677,26 +676,29 @@ def generate_ovis_messages(messages: List[str]) -> Tuple[List, List]:
             if 'content' in message:
                 value += message['content']
 
-            message_dict['value'] = value
-            ovis_messages.append(message_dict)
+        if message.get('role') == 'assistant':
+            message_dict['from'] = 'gpt'
 
-        if message['role'] == 'assistant':
-            value += message['content']
+            if 'content' in message:
+                value += message['content']
 
-            message_dict['value'] = value
-            ovis_messages.append(message_dict)
-
-        if message['role'] == 'system':
-            # not supported by gemma 9b
-            continue
+        message_dict['value'] = value
+        ovis_messages.append(message_dict)
 
     return ovis_messages, image_inputs
 
-def generate_ovis_prompt_text(messages: List[str], **prompt_kwargs) -> str:
+def generate_ovis_prompt(messages: List[str], **prompt_kwargs) -> str:
     model = prompt_kwargs['model']
 
     text_input, image_input = generate_ovis_messages(messages)
-    prompt, _, _ = model.preprocess_inputs(text_input, image_input)
+    processed_images = []
+    for image in image_input:
+        if type(image) == str:
+            processed_images.append(load_image(image))
+        else:
+            processed_images.append(image)
+
+    prompt, input_ids, pixel_values = model.preprocess_inputs(text_input, processed_images, return_labels=False)
 
     return prompt
 
@@ -725,8 +727,17 @@ def generate_ovis_response(**response_kwargs) -> str:
     text_tokenizer = model.get_text_tokenizer()
     visual_tokenizer = model.get_visual_tokenizer()
 
-    ovis_messages, image_paths = generate_ovis_messages(messages)
-    prompt, input_ids, pixel_values = model.preprocess_inputs(ovis_messages, image_paths)
+    text_input, image_input = generate_ovis_messages(messages)
+
+    processed_images = []
+    for image in image_input:
+        if type(image) == str:
+            processed_images.append(load_image(image))
+        else:
+            processed_images.append(image)
+
+    prompt, input_ids, pixel_values = model.preprocess_inputs(text_input, processed_images, return_labels=False)
+
     attention_mask = torch.ne(input_ids, text_tokenizer.pad_token_id)
     input_ids = input_ids.unsqueeze(0).to(device=device)
     attention_mask = attention_mask.unsqueeze(0).to(device=device)
@@ -746,8 +757,149 @@ def generate_ovis_response(**response_kwargs) -> str:
             use_cache=True
         )
 
-        output_ids = model.generate(input_ids, pixel_values=pixel_values, attention_mask=attention_mask, **gen_kwargs)[
-            0]
+        output_ids = model.generate(input_ids, pixel_values=pixel_values, attention_mask=attention_mask, **gen_kwargs)[0]
+        response = text_tokenizer.decode(output_ids, skip_special_tokens=True)
+
+        return response
+
+
+"""
+##### OVIS LLama MODELS #####
+"""
+
+def generate_ovis_l_messages(messages: List[Dict], **prompt_kwargs) -> Tuple[List, List]:
+    """Generates Ovis-1.6 Gemma 9b formatted messages and image inputs from a list of messages.
+
+
+
+
+    Args:
+        messages (List[Dict]): A list of message dictionaries containing user, assistant, and optionally images.
+
+    Returns:
+        Tuple[List, List]: A tuple containing:
+            - A list of Qwen-VL formatted messages.
+            - A list of image inputs extracted from the messages.
+    """
+
+    # Ovis uses gpt and human for asistant and  user.
+    # there is a preprocessing script that later on translates this
+    # into standard roles used by gemma.
+    # content is provided as a str under value key inside the conversation/msg dict.
+    # conversation needs to be a list of dictionaries.
+
+    ovis_messages = []
+    image_inputs = []
+
+    for message in messages:
+        message_dict = {}
+        value = ""
+
+        if message.get('role') == 'system':
+            continue
+
+        if message.get('role') == 'user':
+            message_dict['from'] = 'human'
+
+            # Check if the 'image' key exists and handle it accordingly
+            image_field = message.get('image', None)
+            if isinstance(image_field, str):
+                value += '<image>\n'
+                image_inputs.append(image_field)
+            elif isinstance(image_field, list):
+                for inx, val in enumerate(image_field):
+                    value += f"Image {inx}: <image>\n"
+                    image_inputs.append(val)
+            else:
+                # Create a blank image if no valid 'image' field is found
+                blank_image = Image.new("RGB", (128, 128), color="white")
+                image_inputs.append(blank_image)
+                value += '<image>\n'
+
+            if 'content' in message:
+                value += message['content']
+
+        if message.get('role') == 'assistant':
+            message_dict['from'] = 'gpt'
+
+            if 'content' in message:
+                value += message['content']
+
+        message_dict['value'] = value
+        ovis_messages.append(message_dict)
+
+    return ovis_messages, image_inputs
+
+def generate_ovis_l_prompt(messages: List[str], **prompt_kwargs) -> str:
+    model = prompt_kwargs['model']
+    text_tokenizer = model.get_text_tokenizer()
+    visual_tokenizer = model.get_visual_tokenizer()
+    conversation_formatter = model.get_conversation_formatter()
+
+    text_input, image_input = generate_ovis_l_messages(messages)
+
+    prompt, _, _ = conversation_formatter.format(text_input)
+
+    return prompt
+
+
+def generate_ovis_l_response(**response_kwargs) -> str:
+    """Generates a response from the Qwen-vl model based on the provided messages and configuration.
+
+    Args:
+        **response_kwargs: A dictionary containing the following keys:
+            - messages (List[str]): A list of message dictionaries.
+            - device (str): The device to which the image tensors will be moved (e.g., 'cuda' or 'cpu').
+            - max_tokens (int): The maximum number of tokens to generate.
+            - model: The model instance used for generating responses.
+            - processor: The processor instance used for processing images.
+
+    Returns:
+        str: The generated response from the LLAVA model.
+    """
+    messages = response_kwargs['messages']
+    device = response_kwargs['device']
+    max_tokens = response_kwargs['max_tokens']
+    model = response_kwargs['model']
+    processor = response_kwargs['processor']
+    do_sample = response_kwargs['do_sample']
+
+    text_tokenizer = model.get_text_tokenizer()
+    visual_tokenizer = model.get_visual_tokenizer()
+    conversation_formatter = model.get_conversation_formatter()
+
+    text_input, image_input = generate_ovis_messages(messages)
+
+    processed_images = []
+    for image in image_input:
+        if type(image) == str:
+            processed_images.append(load_image(image))
+        else:
+            processed_images.append(image)
+
+
+    prompt, input_ids, _ = conversation_formatter.format(text_input)
+    input_ids = torch.unsqueeze(input_ids, dim=0).to(device=device)
+    attention_mask = torch.ne(input_ids, text_tokenizer.pad_token_id).to(device=device)
+
+    pixel_values = [visual_tokenizer.preprocess_image(processed_images[0]).to(
+        dtype=visual_tokenizer.dtype, device=device)]
+
+    # generate output
+    with torch.inference_mode():
+        gen_kwargs = dict(
+            max_new_tokens=max_tokens,
+            do_sample=do_sample,
+            top_p=None,
+            top_k=None,
+            temperature=None,
+            repetition_penalty=None,
+            eos_token_id=model.generation_config.eos_token_id,
+            pad_token_id=text_tokenizer.pad_token_id,
+            use_cache=True
+        )
+
+        output_ids = model.generate(input_ids, pixel_values=pixel_values, attention_mask=attention_mask, **gen_kwargs)[0]
         response = text_tokenizer.decode(output_ids, skip_special_tokens=True)
 
         return response
@@ -758,7 +910,7 @@ def generate_ovis_response(**response_kwargs) -> str:
 """
 
 
-def generate_pixtral_messages(messages: List[Dict]) -> Tuple[List, List]:
+def generate_pixtral_messages(messages: List[Dict], **prompt_kwargs) -> Tuple[List, List]:
     """
     Generates Pixtral-12b formatted messages and image inputs from a list of messages.
 
@@ -774,50 +926,58 @@ def generate_pixtral_messages(messages: List[Dict]) -> Tuple[List, List]:
     image_inputs = []
 
     for message in messages:
-        formatted_message = {"role": message["role"], "content": []}
+        if message['role'] == 'system':
+            continue
+        if message['role'] == 'assistant':
+            formatted_message= {"role": message["role"], "content" : message["content"]}
 
-        if "image" in message:
-            if isinstance(message["image"], str):
-                # Single image
-                formatted_message["content"].append({"type": "image"})
-                image_inputs.append(message["image"])
-            elif isinstance(message["image"], list):
-                # Multiple images
-                for img in message["image"]:
+        else:
+            formatted_message = {"role": message["role"], "content": []}
+
+            if "content" in message:
+                # Add text content
+                formatted_message["content"].append({"type": "text", "content": message["content"]})
+
+            if "image" in message:
+                # Handle image content (both single and multiple images)
+                if isinstance(message["image"], str):
                     formatted_message["content"].append({"type": "image"})
-                    image_inputs.append(img)
-            else:
-                raise ValueError("Invalid image type in message - should be str or List[str]")
-
-        if "content" in message:
-            # Add text content
-            formatted_message["content"].append({"type": "text", "text": message["content"]})
+                    image_inputs.append(message["image"])
+                elif isinstance(message["image"], list):
+                    for img in message["image"]:
+                        formatted_message["content"].append({"type": "image"})
+                        image_inputs.append(img)
+                else:
+                    raise ValueError("Invalid image type in message - should be str or List[str]")
 
         pixtral_messages.append(formatted_message)
 
-    # Ensure the last user message contains an image if required by Pixtral-12b
-    if pixtral_messages and pixtral_messages[-1]["role"] == "user":
-        if not any(item["type"] == "image" for item in pixtral_messages[-1]["content"]):
-            blank_image = Image.new("RGB", (128, 128), color="white")  # Placeholder blank image
-            image_inputs.append(blank_image)
-            pixtral_messages[-1]["content"].append({"type": "image"})
+        # Ensure last user message has an image if required
+        if pixtral_messages and pixtral_messages[-1]["role"] == "user":
+            if not any(item["type"] == "image" for item in pixtral_messages[-1]["content"]):
+                blank_image = Image.new("RGB", (128, 128), color="white")  # Placeholder blank image
+                image_inputs.append(blank_image)
+                pixtral_messages[-1]["content"].append({"type": "image"})
 
     return pixtral_messages, image_inputs
 
-def generate_pixtral_prompt_text(messages: List[Dict], processor, **kwargs) -> str:
+def generate_pixtral_prompt(messages: List[Dict], **prompt_kwargs) -> str:
     """
     Generates a prompt for Pixtral-12b based on input messages.
 
     Args:
         messages (List[Dict]): A list of messages.
         processor: The Pixtral-12b processor instance.
-        **kwargs: Additional keyword arguments.
 
     Returns:
         str: The formatted prompt.
     """
+
+
     pixtral_messages, _ = generate_pixtral_messages(messages)
-    prompt = processor.apply_chat_template(pixtral_messages, add_generation_prompt=True, **kwargs)
+
+    processor = prompt_kwargs['processor']
+    prompt = processor.apply_chat_template(pixtral_messages)
 
     return prompt
 
@@ -844,27 +1004,272 @@ def generate_pixtral_response(**response_kwargs) -> str:
     model = response_kwargs["model"]
     processor = response_kwargs["processor"]
     do_sample = response_kwargs.get("do_sample", False)
+    template_input = response_kwargs.get("template") # need to render template. There is a error in code. Must do
 
     pixtral_messages, image_paths = generate_pixtral_messages(messages=messages)
-    prompt = processor.apply_chat_template(pixtral_messages, add_generation_prompt=True)
+    prompt = processor.apply_chat_template(pixtral_messages)
+    processed_images = []
+    for image in image_paths:
+        if type(image) == str:
+            processed_images.append(load_image(image))
+        else:
+            processed_images.append(image)
+
+    image_paths = processed_images
+    inputs = processor(text=prompt, images=image_paths, return_tensors="pt").to(device)
+
+
+    generate_ids = model.generate(**inputs, max_new_tokens=max_tokens, do_sample=do_sample)
+    response = processor.batch_decode(generate_ids, skip_special_tokens=False, clean_up_tokenization_spaces=False)
+
+    return response[0]
+
+
+"""
+##### Phi-3.5-Vision, Phi-3-vision-128k-instruct #####
+"""
+
+def generate_phi_messages(messages: List[Dict]) -> Tuple[List, List]:
+    """
+    Generates Pixtral-12b formatted messages and image inputs from a list of messages.
+
+    Args:
+        messages (List[Dict]): A list of message dictionaries containing 'role', 'content', and optionally 'image'.
+
+    Returns:
+        Tuple[List, List]: A tuple containing:
+            - A list of Pixtral-12b formatted messages.
+            - A list of image inputs extracted from the messages.
+    """
+
+    phi_messages = []
+    image_inputs = []
+
+    for message in messages:
+        message_obj = {}
+        if message['role'] == 'system':
+            continue
+        if message['role'] == 'user':
+            message_obj['role'] = message['role']
+            content = ''
+
+            if 'image' in message:
+                if isinstance(message["image"], str):
+                    # message_obj["content"].append({"type": "image"})
+                    image_inputs.append(message["image"])
+                    content += '<|image_1|>\n'
+                elif isinstance(message["image"], list):
+                    for inx, img in enumerate(message["image"]):
+                        # formatted_message["content"].append({"type": "image"})
+                        image_inputs.append(img)
+                        content += f'<|image_{inx}|>\n'
+                else:
+                    blank_image = Image.new("RGB", (128, 128), color="white")  # Placeholder blank image
+                    content += '<|image_1|>\n'
+                    image_inputs.append(blank_image)
+
+            if "content" in message:
+                content += message['content']
+                message_obj['content'] = content
+
+        if message['role'] == 'assistant':
+            content = ''
+            message_obj['role'] = message['role']
+
+            if "content" in message:
+                content += message['content']
+                message_obj['content'] = content
+
+        phi_messages.append(message_obj)
+
+    return phi_messages, image_inputs
+
+def generate_phi_prompt(messages: List[Dict], **prompt_kwargs) -> str:
+    """
+    Generates a prompt for Pixtral-12b based on input messages.
+
+    Args:
+        messages (List[Dict]): A list of messages.
+        processor: The Pixtral-12b processor instance.
+
+    Returns:
+        str: The formatted prompt.
+    """
+    phi_messages, _ = generate_phi_messages(messages)
+    processor = prompt_kwargs['processor']
+    prompt = processor.apply_chat_template(phi_messages)
+
+    return prompt
+
+def generate_phi_response(**response_kwargs) -> str:
+    """
+    Generates a response from the Pixtral-12b model.
+
+    Args:
+        **response_kwargs: A dictionary containing:
+            - messages (List[Dict]): Input messages.
+            - device (str): Device for processing (e.g., 'cuda' or 'cpu').
+            - max_tokens (int): Maximum number of tokens to generate.
+            - model: Pixtral-12b model instance.
+            - processor: Pixtral-12b processor instance.
+            - do_sample (bool): Whether to sample during generation.
+
+    Returns:
+        str: The generated response.
+    """
+
+    messages = response_kwargs["messages"]
+    device = response_kwargs["device"]
+    max_tokens = response_kwargs["max_tokens"]
+    model = response_kwargs["model"]
+    processor = response_kwargs["processor"]
+    do_sample = response_kwargs.get("do_sample", False)
+
+    phi_messages, image_paths = generate_phi_messages(messages)
+    prompt = processor.apply_chat_template(phi_messages, tokenize=False, add_generation_prompt=True)
+
+    processed_images = []
+    for image in image_paths:
+        if type(image) == str:
+            processed_images.append(load_image(image))
+        else:
+            processed_images.append(image)
+
+    image_paths = processed_images
+
+    inputs = processor(prompt, image_paths, return_tensors="pt").to(device)
+
+    generation_args = {
+        "max_new_tokens": max_tokens,
+        "temperature": 0.0,
+        "do_sample": do_sample,
+    }
+
+    generate_ids = model.generate(**inputs,
+                                  eos_token_id=processor.tokenizer.eos_token_id,
+                                  **generation_args
+                                  )
+    # remove input tokens
+    generate_ids = generate_ids[:, inputs['input_ids'].shape[1]:]
+    response = processor.batch_decode(generate_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
+
+    return response
+
+
+
+"""
+##### POINTS-1-5-Qwen-2-5-7B-Chat #####
+"""
+
+def generate_points_messages(messages: List[str]) -> Tuple[List, List]:
+    """Generates Qwen-VL formatted messages and image inputs from a list of messages.
+
+    Args:
+        messages (List[Dict]): A list of message dictionaries containing user, assistant, and optionally images.
+
+    Returns:
+        Tuple[List, List]: A tuple containing:
+            - A list of Qwen-VL formatted messages.
+            - A list of image inputs extracted from the messages.
+    """
+    points_messages = []
+    image_inputs = []
+
+    for message in messages:
+        message_dict = {'role': message['role'], 'content': []}
+
+        if message['role'] == 'user':
+            if 'image' in message:
+                if isinstance(message['image'], str):
+                    # Single image
+                    message_dict['content'].append({"type": "image", "image": message['image']})
+                    image_inputs.append(message['image'])
+                else:
+                    raise ValueError("Invalid image type in message - should be str")
+
+            # Add user text
+            if 'content' in message:
+                message_dict['content'].append({"type": "text", "text": message['content']})
+
+            points_messages.append(message_dict)
+
+        elif message['role'] == 'assistant':
+            # Add assistant response
+            message_dict['content'].append({"type": "text", "text": message['content']})
+            points_messages.append(message_dict)
+
+        elif message['role'] == 'system':
+            # Qwen-VL does not process system messages directly, so skip
+            continue
+        else:
+            raise ValueError(f"Invalid role: {message['role']}. Expected 'user', 'assistant', or 'system'.")
+
+    if points_messages and points_messages[-1]['role'] == 'user':
+        content = points_messages[-1]['content']
+        contains_image = any(item["type"] == "image" for item in content)
+
+        if not contains_image:
+            blank_image = Image.new("RGB", (128, 128), color="white")
+            image_inputs.append(blank_image)
+            points_messages[-1]['content'].append({"type": "image", "image": blank_image})
+
+    return points_messages, image_inputs
+
+def generate_points_prompt(messages: List[str], **prompt_kwargs) -> str:
+    points_messages, _ = generate_points_messages(messages=messages)
+    model = prompt_kwargs['model']
+    img_processor = Qwen2VLImageProcessor.from_pretrained(prompt_kwargs['model_id'])
+    prompt, _, _ = model.construct_prompt(points_messages, img_processor)
+
+    return prompt
+
+def generate_points_response(**response_kwargs) -> str:
+    """Generates a response from the Qwen-vl model based on the provided messages and configuration.
+
+    Args:
+        **response_kwargs: A dictionary containing the following keys:
+            - messages (List[str]): A list of message dictionaries.
+            - device (str): The device to which the image tensors will be moved (e.g., 'cuda' or 'cpu').
+            - max_tokens (int): The maximum number of tokens to generate.
+            - model: The model instance used for generating responses.
+            - processor: The processor instance used for processing images.
+
+    Returns:
+        str: The generated response from the LLAVA model.
+    """
+
+    messages = response_kwargs['messages']
+    device = response_kwargs['device']
+    max_tokens = response_kwargs['max_tokens']
+    model = response_kwargs['model']
+    processor = response_kwargs['processor']
+    do_sample = response_kwargs['do_sample']
+    model_id = response_kwargs['model_id']
+
+    points_messages, image_paths = generate_qwen_vl_messages(messages=messages)
+    img_processor = Qwen2VLImageProcessor.from_pretrained(model_id)
 
     # Process images
     processed_images = []
     for image in image_paths:
-        if isinstance(image, str):
-            processed_images.append(load_image(image))  # Custom image loader function
+        if type(image) == str:
+            processed_images.append(load_image(image))
         else:
             processed_images.append(image)
 
-    inputs = processor(images=processed_images, text=prompt, return_tensors="pt").to(device)
+    generation_config = {
+        'max_new_tokens': max_tokens,
+        'temperature': 0.0,
+        'top_p': 0.0,
+        'do_sample': do_sample,
+    }
 
-
-    # outputs = llm.chat(pixtral_messages, sampling_params=sampling_params)
-    # print(outputs[0].outputs[0].text)
-
-    output_ids = model.generate(**inputs, max_new_tokens=max_tokens, do_sample=do_sample)
-    generated_ids = [output_ids[len(input_ids):] for input_ids, output_ids in zip(inputs.input_ids, output_ids)]
-
-    response = processor.batch_decode(generated_ids, skip_special_tokens=True, clean_up_tokenization_spaces=True)
+    response = model.chat(
+        points_messages,
+        processor,
+        img_processor,
+        generation_config
+    )
 
     return response
+

@@ -24,12 +24,12 @@ import os
 # Define the base path relative to this file's location
 BASE_PATH = Path(__file__).parent.parent.parent
 
-IMAGE_OUTPUT_PATH = 'resources/images'
-METADATA_OUTPUT_PATH='resources/metadata'
+IMAGE_OUTPUT_PATH = str(BASE_PATH / 'games/i_spy_final/resources/')
+METADATA_OUTPUT_PATH=str(BASE_PATH / 'games/i_spy_final/resources/metadata')
 MAX_TURNS = 10
 MAX_REPROMPTS = 2
 GAME_NAME = 'i_spy_final'
-TURN_TEMPLATE = "resources/prompts/static/turn.template"
+TURN_TEMPLATE = str(BASE_PATH / 'games/i_spy_final/resources/prompts/static/turn.template')
 logger = get_logger(__name__)
 
 MOVEMENT_KEYS  = ["MOVE", "LOOK", "TURN"]
@@ -119,6 +119,7 @@ class ISpyFinalGameMaster(DialogueGameMaster):
 
         self.selected_object: str = game_instance["selected_object"]
         self.selected_object_id: str = game_instance["selected_object_id"]
+
         self.object_location = None
 
         self.min_guess_turn: int = game_instance["min_guess_turn"]
@@ -134,7 +135,6 @@ class ISpyFinalGameMaster(DialogueGameMaster):
 
         # adapt teacher prompt
         self.teacher_prompt = self.teacher_prompt.replace("$OBJECT$", self.selected_object)
-
         # template to define turn
         self.turn_template = self.load_template(TURN_TEMPLATE)
 
