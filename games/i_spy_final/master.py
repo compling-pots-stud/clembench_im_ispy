@@ -998,7 +998,7 @@ class ISpyFinalGameMaster(DialogueGameMaster):
             return None
 
 
-class ISpyInteractiveBenchmark(GameBenchmark):
+class ISpyFinalBenchmark(GameBenchmark):
     def __init__(self):
         super().__init__(GAME_NAME)
 
@@ -1018,22 +1018,22 @@ class ISpyInteractiveBenchmark(GameBenchmark):
     def create_game_scorer(self, experiment: Dict, game_instance: Dict):
         return ISpyScorer(experiment, game_instance)
 
-if __name__ == "__main__":
-
-    # comment out to run with cli
-    from clemgame import benchmark
-    from scripts.cli import read_model_specs
-
-    # model_specs: list[str] = ["gpt-4o-2024-05-13", "gpt-4o-mini-2024-07-18"]
-    # model_specs: list[str] = ["Llama-3.2-90B-Vision-Instruct-Turbo-Together.ai", "Llama-3.2-11B-Vision-Instruct-Turbo-Together.ai"]
-    model_specs: list[str] = ["Qwen2-VL-7B-Instruct", "Qwen2-VL-7B-Instruct"]
-
-    # model_specs: list[str] = ["llava-v1.5-7b-4096-preview", "llava-v1.5-7b-4096-preview"]
-
-    gen_args: dict[str: str] = {"temperature": 0.0, "max_tokens": 1000}
-
-    benchmark.run(
-        game_name=GAME_NAME,
-        model_specs=read_model_specs(model_specs),
-        gen_args=gen_args,
-    )
+# if __name__ == "__main__":
+#
+#     # comment out to run with cli
+#     from clemgame import benchmark
+#     from scripts.cli import read_model_specs
+#
+#     # model_specs: list[str] = ["gpt-4o-2024-05-13", "gpt-4o-mini-2024-07-18"]
+#     # model_specs: list[str] = ["Llama-3.2-90B-Vision-Instruct-Turbo-Together.ai", "Llama-3.2-11B-Vision-Instruct-Turbo-Together.ai"]
+#     model_specs: list[str] = ["Qwen2-VL-7B-Instruct", "Qwen2-VL-7B-Instruct"]
+#
+#     # model_specs: list[str] = ["llava-v1.5-7b-4096-preview", "llava-v1.5-7b-4096-preview"]
+#
+#     gen_args: dict[str: str] = {"temperature": 0.0, "max_tokens": 1000}
+#
+#     benchmark.run(
+#         game_name=GAME_NAME,
+#         model_specs=read_model_specs(model_specs),
+#         gen_args=gen_args,
+#     )

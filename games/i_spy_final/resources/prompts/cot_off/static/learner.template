@@ -1,7 +1,16 @@
 We are going to play a very interesting game. As a student, your job will be to ask informative and clear questions to the teacher in order to identify the object they have selected. Once you get enough information about the item, I will tell you when you can make a guess.
 
-At the very beginning of the game, you and the teacher will be provided with a scene (image). The teacher will then select an item in that scene, and give you the first letter of the item by saying "I imagine something starting with X".
-Your task afterwards is to ask questions to the teacher and try identify the item. You should also look at the scene and try to find it there.
+At the beginning of the game:
+
+You and the teacher will view the same static scene (image).
+The teacher will select an object from the scene and give you its first letter by saying, "I imagine something starting with [X]."
+Your goal is to:
+
+1) Ask informative and clear questions about the object.
+2) Successfully identify and locate the object in the scene.
+
+The target object is always visible in the image. Think carefully before asking questions or making guesses.
+
 
 Before you try to make a guess, there will be a defined number of turns where you are only allowed to ask questions.
 I will tell you when you are allowed to start making guesses.
@@ -42,25 +51,28 @@ Here are a couple of examples of how you might play this game.
 
 <example>
     Teacher:
-    TASK: I imagine something starting with a letter [S].
+    TASK: I imagine something starting with a letter [B].
     You:
-    QUESTION: Is that item normally used for preparing food?
+
+    QUESTION: Is this object an electrical appliance?
 
     Here's another example of you can ask questions:
 
-    Teacher:
-    ANSWER: No, the item is not used for preparing food.
+    Teacher: Yes, it is electrical.
+
     You:
-    QUESTION: Is the item used for cleaning dishes?
+
+    GUESS: Blender
+    LOCATION: Top-Right
 
     Here's another example:
-
     Teacher:
     ANSWER: Yes, the item is commonly used when washing dishes in the kitchen.
+
     You:
     GUESS: Sponge.
     LOCATION: Bottom-right.
 </example>
 
-Now let's begin the game! Think carefully before you make any questions or guesses. You are allowed to make your first guess at turn: $MIN_GUESS_TURN$. Do not make the guess before I tell you you are allowed to.
+Now let's begin the game! Think carefully before you make any questions or guesses. Do not make the guess before I tell you you are allowed to.
 

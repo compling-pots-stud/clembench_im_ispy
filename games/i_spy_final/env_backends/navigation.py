@@ -1,6 +1,6 @@
 import json
 from os import environ
-from games.i_spy_interactive.env_backends.agents import AI2ThorEnvironment  # Import your specific agent classes
+from games.i_spy_final.env_backends.agents import AI2ThorEnvironment  # Import your specific agent classes
 from typing import Dict, List, Any
 import numpy as np
 from pathlib import Path

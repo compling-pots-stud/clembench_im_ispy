@@ -54,12 +54,15 @@ class ISpyScorer(GameScorer):
                     turn_score_dict['learner_parsing_error_count'] += 1
                     turn_score_dict['parsing_error_count'] += 1
                     turn_score_dict['request_count'] += 1
+                    turn_score_dict['learner_request_count'] += 1
+
 
                 elif action['type'] == 'teacher_parsing_error':
                     turn_score_dict['teacher_parsing_error_count'] += 1
                     turn_score_dict['parsing_error_count'] += 1
                     turn_score_dict['request_count'] += 1
 
+                # maybe we don't need the request counter here
                 elif action['type'] == 'valid format':
                     turn_score_dict['request_count'] += 1
                     turn_score_dict['parsed_request_count'] += 1
@@ -70,6 +73,7 @@ class ISpyScorer(GameScorer):
 
                     if action['content'] == 'Learner':
                         turn_score_dict['learner_reprompt_attempt'] += 1
+                        turn_score_dict['learner_request_count'] += 1
 
                     else:
                         turn_score_dict['teacher_reprompt_attempt'] += 1
@@ -98,14 +102,11 @@ class ISpyScorer(GameScorer):
                 elif action['type'] == 'record_incorrect':
                     turn_score_dict['teacher_incorrect'] += 1
 
-
                 elif action['type'] == 'success':
                     turn_score_dict['success'] += 1
 
-
                 elif action['type'] == 'max turns reached':
                     turn_score_dict['lost'] += 1
-
 
                 elif action['type'] == 'max reprompts reached':
                     turn_score_dict['aborted'] += 1
@@ -185,9 +186,11 @@ class ISpyScorer(GameScorer):
                                if episode_interactions['learner_error_count'] > 0 else None)
 
         learner_guess_accuracy = 1/episode_interactions['guess_attempt_count'] if is_success else 0
-        turn_efficiency = 1 - (episode_interactions['learner_error_count'] / learner_request_count) if (
-            learner_request_count) > 0 else 0
-
+        turn_efficiency = (
+            1 - (episode_interactions['learner_error_count'] / learner_request_count)
+            if (learner_request_count > 0 or episode_interactions['learner_error_count'] <= learner_request_count)
+            else 0
+        )
 
         self.log_episode_score('Learner Guess Accuracy', learner_guess_accuracy)
         self.log_episode_score('Learner Turn Efficiency', turn_efficiency)
@@ -196,16 +199,21 @@ class ISpyScorer(GameScorer):
         # learner guess acc is 0 if object isn't identified
         # points deducted in turn_efficiency for every parsing error made by the learner.
         # main score evaluates the ability to guess + instruction following ability.
-        main_score = ((learner_guess_accuracy + turn_efficiency) / 2)*100
+
+        if learner_guess_accuracy == 0 and turn_efficiency == 0:
+            main_score = 0
+        else:
+            main_score = ((learner_guess_accuracy + turn_efficiency) / 2)*100
+
         self.log_episode_score(BENCH_SCORE, main_score)
 
 
-if __name__ == '__main__':
-    from clemgame import benchmark
-    from scripts.cli import read_model_specs
-
-
-    benchmark.score(
-        game_name=GAME_NAME,
-    )
+# if __name__ == '__main__':
+#     from clemgame import benchmark
+#     from scripts.cli import read_model_specs
+#
+#
+#     benchmark.score(
+#         game_name=GAME_NAME,
+#     )
 

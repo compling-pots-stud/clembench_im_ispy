@@ -2016,10 +2016,11 @@
     "prompt": "backends.multimodal_utils.generate_points_prompt",
     "response": "backends.multimodal_utils.generate_points_response",
     "output_split_prefix": "assistant\n",
-    "do_sample": true,
+    "do_sample": false,
     "supports_multiple_images": false,
     "release_date": "2024-08-30",
     "open_weight": true,
-    "parameters": "7B"
+    "parameters": "7B",
+    "trust_remote_code": true
   }
 ]

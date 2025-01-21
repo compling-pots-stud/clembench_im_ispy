@@ -13,6 +13,7 @@ from transformers.image_utils import load_image
 import requests
 from io import BytesIO
 from transformers.models.qwen2_vl.image_processing_qwen2_vl import Qwen2VLImageProcessor
+from wepoints.utils.images import Qwen2ImageProcessorForPOINTSV15
 from jinja2 import Template
 
 """
@@ -22,7 +23,7 @@ from jinja2 import Template
 IMAGENET_MEAN = (0.485, 0.456, 0.406)
 IMAGENET_STD = (0.229, 0.224, 0.225)
 
- 
+
 def generate_history_internvl2(messages: List[str]) -> Tuple[List[Tuple], str]:
     """
     Separates the history and query from the list of messages in the current game instance.
@@ -30,7 +31,7 @@ def generate_history_internvl2(messages: List[str]) -> Tuple[List[Tuple], str]:
 
     Args:
         messages: A list containing user messages, system messages or assistant responses.
-    
+
     Returns:
         A list of tuples containing the history and a user message string, passed to the model in the current game instance.
 
@@ -41,7 +42,7 @@ def generate_history_internvl2(messages: List[str]) -> Tuple[List[Tuple], str]:
     history = []
     for msg in messages:
         if msg['role'] == 'system':
-            continue # Skip the system message, Not passed to the model. Ref - https://huggingface.co/OpenGVLab/InternVL2-40B 
+            continue # Skip the system message, Not passed to the model. Ref - https://huggingface.co/OpenGVLab/InternVL2-40B
         elif msg['role'] == 'user':
             if 'image' in msg:
                 user_message = f"<image>\n{msg['content']}" # Add <image> token if image is passed in this instance.
@@ -60,9 +61,9 @@ def split_model(model_name):
     Splits the model across available GPUs based on the model name.
 
     Args:
-        model_name (str): The name of the model to be split. 
-                          Expected values include 'InternVL2-1B', 'InternVL2-2B', 
-                          'InternVL2-4B', 'InternVL2-8B', 'InternVL2-26B', 
+        model_name (str): The name of the model to be split.
+                          Expected values include 'InternVL2-1B', 'InternVL2-2B',
+                          'InternVL2-4B', 'InternVL2-8B', 'InternVL2-26B',
                           'InternVL2-40B', 'InternVL2-Llama3-76B'.
 
     Returns:
@@ -236,7 +237,7 @@ def get_internvl2_image(messages: List[str], device: str):
     if last_user_message is None:
         raise ValueError("No user message found in the provided messages.")
     else:
-        if len(last_user_message['image']) > 1:            
+        if len(last_user_message['image']) > 1:
             pixel_values = load_internvl2_image(last_user_message['image'][0], max_num=12).to(torch.bfloat16).to(device)
             for i in range(1, len(last_user_message['image'])):
                 pixel_values1 = load_internvl2_image(last_user_message['image'][i], max_num=12).to(torch.bfloat16).to(device)
@@ -288,7 +289,7 @@ def generate_internvl2_response(**response_kwargs) -> str:
     if not history:
         history = None
     generation_config = dict(max_new_tokens=max_tokens, do_sample=True)
-    generated_response, _ = model.chat(processor, images, question, generation_config, 
+    generated_response, _ = model.chat(processor, images, question, generation_config,
                                                      history=history, return_history=True)
 
     return generated_response
@@ -344,7 +345,7 @@ def generate_llava_messages(messages: List[str]) -> Tuple[List, List]:
             continue # Skip System message
         else:
             raise ValueError(f"Invalid role: {message_dict['role']}. Expected 'user', 'system', or 'assistant'.")
-        
+
     last_user_message = llava_messages[-1]
     if last_user_message['role'] == 'user':
         content = last_user_message['content']
@@ -353,7 +354,7 @@ def generate_llava_messages(messages: List[str]) -> Tuple[List, List]:
             if val["type"] == "image":
                 contains_image = True
 
-        if not contains_image: # Pass a blank image 
+        if not contains_image: # Pass a blank image
             blank_image = Image.new('RGB', (128, 128), color='white')
             image_paths.append(blank_image)
             llava_messages[-1]['content'].append({"type": "image"})
@@ -1184,8 +1185,14 @@ def generate_points_messages(messages: List[str]) -> Tuple[List, List]:
                     # Single image
                     message_dict['content'].append({"type": "image", "image": message['image']})
                     image_inputs.append(message['image'])
+                elif isinstance(message['image'], list):
+                    # Multiple images
+                    for img in message['image']:
+                        message_dict['content'].append({"type": "image", "image": img})
+                        image_inputs.append(img)
+
                 else:
-                    raise ValueError("Invalid image type in message - should be str")
+                    raise ValueError("Invalid image type in message - should be str or list[str]")
 
             # Add user text
             if 'content' in message:
@@ -1209,9 +1216,13 @@ def generate_points_messages(messages: List[str]) -> Tuple[List, List]:
         contains_image = any(item["type"] == "image" for item in content)
 
         if not contains_image:
+            # Create a blank image and save it temporarily
             blank_image = Image.new("RGB", (128, 128), color="white")
-            image_inputs.append(blank_image)
-            points_messages[-1]['content'].append({"type": "image", "image": blank_image})
+            temp_path = "/tmp/blank_image.png"
+            blank_image.save(temp_path)
+
+            image_inputs.append(temp_path)
+            points_messages[-1]['content'].append({"type": "image", "image": temp_path})
 
     return points_messages, image_inputs
 
@@ -1220,7 +1231,6 @@ def generate_points_prompt(messages: List[str], **prompt_kwargs) -> str:
     model = prompt_kwargs['model']
     img_processor = Qwen2VLImageProcessor.from_pretrained(prompt_kwargs['model_id'])
     prompt, _, _ = model.construct_prompt(points_messages, img_processor)
-
     return prompt
 
 def generate_points_response(**response_kwargs) -> str:
@@ -1246,16 +1256,11 @@ def generate_points_response(**response_kwargs) -> str:
     do_sample = response_kwargs['do_sample']
     model_id = response_kwargs['model_id']
 
-    points_messages, image_paths = generate_qwen_vl_messages(messages=messages)
-    img_processor = Qwen2VLImageProcessor.from_pretrained(model_id)
+    points_messages, image_paths = generate_points_messages(messages=messages)
+    img_processor = Qwen2ImageProcessorForPOINTSV15.from_pretrained(model_id)
+
 
     # Process images
-    processed_images = []
-    for image in image_paths:
-        if type(image) == str:
-            processed_images.append(load_image(image))
-        else:
-            processed_images.append(image)
 
     generation_config = {
         'max_new_tokens': max_tokens,
