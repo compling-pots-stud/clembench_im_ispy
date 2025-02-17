@@ -44,36 +44,62 @@ class ISpyScorer(GameScorer):
                 'success': 0,
                 'lost': 0,
                 'object_in_frame': 0,
-                'learner_request_count' : 0
+                'learner_request_count' : 0,
+                'guess_allowed' : 0,
+                'guess_not_allowed_error' : 0,
+                'learner_invalid_format_error' : 0,
+                'look' : 0,
+                'turn' : 0,
+                'move' : 0,
+                'mf' : 0,
+                'mb' : 0,
+                'ml' : 0,
+                'mr' : 0,
+                'mn' : 0,
+                'lu' : 0,
+                'ld' : 0,
+                'll' : 0,
+                'lr' : 0,
+                'ln' : 0,
+                'tl' : 0,
+                'tr' : 0,
+                'tb' : 0,
             }
 
             for event in turn:
                 action = event['action']
+                if action['type'] == 'get message':
+                    turn_score_dict['request_count'] += 1
+                    if event['from'] =='Player 1':
+                        turn_score_dict['learner_request_count'] += 1
 
-                if action['type'] == 'learner_parsing_error':
+                elif action['type'] == 'learner_parsing_error':
                     turn_score_dict['learner_parsing_error_count'] += 1
                     turn_score_dict['parsing_error_count'] += 1
-                    turn_score_dict['request_count'] += 1
-                    turn_score_dict['learner_request_count'] += 1
-
+                    # turn_score_dict['request_count'] += 1
+                    # turn_score_dict['learner_request_count'] += 1
+                    if action['content'] == 'guess_not_allowed':
+                        turn_score_dict['guess_not_allowed_error'] += 1
+                    elif action['content'] == 'invalid_format':
+                        turn_score_dict['learner_invalid_format_error'] += 1
 
                 elif action['type'] == 'teacher_parsing_error':
                     turn_score_dict['teacher_parsing_error_count'] += 1
                     turn_score_dict['parsing_error_count'] += 1
-                    turn_score_dict['request_count'] += 1
+                    # turn_score_dict['request_count'] += 1
 
                 # maybe we don't need the request counter here
                 elif action['type'] == 'valid format':
-                    turn_score_dict['request_count'] += 1
+                    # turn_score_dict['request_count'] += 1
                     turn_score_dict['parsed_request_count'] += 1
 
                 elif action['type'] == 'reprompt_attempt':
-                    turn_score_dict['request_count'] += 1
+                    # turn_score_dict['request_count'] += 1
                     turn_score_dict['reprompt_attempts'] += 1
 
                     if action['content'] == 'Learner':
                         turn_score_dict['learner_reprompt_attempt'] += 1
-                        turn_score_dict['learner_request_count'] += 1
+                        # turn_score_dict['learner_request_count'] += 1
 
                     else:
                         turn_score_dict['teacher_reprompt_attempt'] += 1
@@ -82,16 +108,13 @@ class ISpyScorer(GameScorer):
                     if action['content'] == 'visible':
                         turn_score_dict['object_in_frame'] += 1
 
-                elif action['type'] == 'record_move':
-                    turn_score_dict['learner_move'] += 1
-
                 elif action['type'] == 'record_question':
                     turn_score_dict['learner_question'] += 1
-                    turn_score_dict['learner_request_count'] += 1
+                    # turn_score_dict['learner_request_count'] += 1
 
                 elif action['type'] == 'record_guess':
                     turn_score_dict['learner_guess'] += 1
-                    turn_score_dict['learner_request_count'] += 1
+                    # turn_score_dict['learner_request_count'] += 1
 
                 elif action['type'] == 'record_success':
                     turn_score_dict['teacher_success'] += 1
@@ -102,6 +125,8 @@ class ISpyScorer(GameScorer):
                 elif action['type'] == 'record_incorrect':
                     turn_score_dict['teacher_incorrect'] += 1
 
+                elif action['type'] == 'guess_allowed':
+                    turn_score_dict['guess_allowed'] += 1
                 elif action['type'] == 'success':
                     turn_score_dict['success'] += 1
 
@@ -111,11 +136,46 @@ class ISpyScorer(GameScorer):
                 elif action['type'] == 'max reprompts reached':
                     turn_score_dict['aborted'] += 1
 
+                elif action['type'] == 'record_move':
+                    turn_score_dict['learner_move'] += 1
+
+                    if 'LOOK:' in action['content']:
+                        if 'up' in action['content'].lower():
+                            turn_score_dict['lu'] += 1
+                        if 'down' in action['content'].lower():
+                            turn_score_dict['ld'] += 1
+                        if 'left' in action['content'].lower():
+                            turn_score_dict['ll'] += 1
+                        if 'right' in action['content'].lower():
+                            turn_score_dict['lr'] += 1
+                        if 'none' in action['content'].lower():
+                            turn_score_dict['ln'] += 1
+
+                    if 'TURN:' in action['content']:
+                        if 'left' in action['content'].lower():
+                            turn_score_dict['tl'] += 1
+                        if 'right' in action['content'].lower():
+                            turn_score_dict['tr'] += 1
+                        if 'behind' in action['content'].lower():
+                            turn_score_dict['tb'] += 1
+
+                    if 'MOVE:' in action['content']:
+                        if 'forward' in action['content'].lower():
+                            turn_score_dict['mf'] += 1
+                        if 'backward' in action['content'].lower():
+                            turn_score_dict['mb'] += 1
+                        if 'left' in action['content'].lower():
+                            turn_score_dict['ml'] += 1
+                        if 'right' in action['content'].lower():
+                            turn_score_dict['mr'] += 1
+                        if 'none' in action['content'].lower():
+                            turn_score_dict['mn'] += 1
+
             learner_request_count += turn_score_dict['learner_request_count']
 
-            self.log_turn_score(idx, METRIC_ABORTED, turn_score_dict['aborted'])
-            self.log_turn_score(idx, METRIC_SUCCESS, turn_score_dict['success'])
-            self.log_turn_score(idx, METRIC_LOSE, turn_score_dict['lost'])
+            self.log_turn_score(idx, METRIC_ABORTED, 1 if turn_score_dict['aborted'] > 0 else 0)
+            self.log_turn_score(idx, METRIC_SUCCESS, 1 if turn_score_dict['success'] > 0 else 0)
+            self.log_turn_score(idx, METRIC_LOSE, 1 if turn_score_dict['lost'] > 0 else 0)
             self.log_turn_score(idx, METRIC_REQUEST_COUNT, turn_score_dict['request_count'])
             self.log_turn_score(idx, METRIC_REQUEST_COUNT_PARSED, turn_score_dict['parsed_request_count'])
             self.log_turn_score(idx, METRIC_REQUEST_COUNT_VIOLATED, turn_score_dict['parsing_error_count'])
@@ -137,6 +197,24 @@ class ISpyScorer(GameScorer):
             self.log_turn_score(idx, 'Reprompt Attempts', turn_score_dict['reprompt_attempts'])
             self.log_turn_score(idx, 'Reprompt Attempts Learner', turn_score_dict['learner_reprompt_attempt'])
             self.log_turn_score(idx, 'Reprompt Attempts Teacher', turn_score_dict['teacher_reprompt_attempt'])
+            self.log_turn_score(idx, 'Guess Allowed', turn_score_dict['guess_allowed'])
+
+            self.log_turn_score(idx, 'look', turn_score_dict['look'])
+            self.log_turn_score(idx, 'turn', turn_score_dict['turn'])
+            self.log_turn_score(idx, 'move', turn_score_dict['move'])
+            self.log_turn_score(idx, 'mf', turn_score_dict['mf'])
+            self.log_turn_score(idx, 'mb', turn_score_dict['mb'])
+            self.log_turn_score(idx, 'ml', turn_score_dict['ml'])
+            self.log_turn_score(idx, 'mr', turn_score_dict['mr'])
+            self.log_turn_score(idx, 'mn', turn_score_dict['mn'])
+            self.log_turn_score(idx, 'lu', turn_score_dict['lu'])
+            self.log_turn_score(idx, 'ld', turn_score_dict['ld'])
+            self.log_turn_score(idx, 'll', turn_score_dict['ll'])
+            self.log_turn_score(idx, 'lr', turn_score_dict['lr'])
+            self.log_turn_score(idx, 'ln', turn_score_dict['ln'])
+            self.log_turn_score(idx, 'tl', turn_score_dict['tl'])
+            self.log_turn_score(idx, 'tr', turn_score_dict['tr'])
+            self.log_turn_score(idx, 'tb', turn_score_dict['tb'])
 
         return learner_request_count
 

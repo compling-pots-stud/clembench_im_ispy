@@ -342,7 +342,9 @@ class ISpyFinalGameMaster(DialogueGameMaster):
             return False
 
         if response.get("GUESS"):
-            self.log_to_self("record_guess", f"QUESTION: {response['GUESS']}" )
+            self.log_to_self("record_guess", f"GUESS: {response['GUESS']}" )
+            if response.get("LOCATION"):
+                self.log_to_self("record_guess_location", f"{response['LOCATION']}")
 
             self.guess_attempt_count += 1
             if not self.can_guess:

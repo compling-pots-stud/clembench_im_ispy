@@ -128,7 +128,7 @@ def get_scenes() -> list[str]:
     kitchens = [scene for scene in kitchens if scene != 'FloorPlan8']
 
     # Select 3 random examples from each room type
-    selected_kitchens = random.sample(kitchens, 3)
+    B = random.sample(kitchens, 3)
     selected_living_rooms = random.sample(living_rooms, 3)
     selected_bedrooms = random.sample(bedrooms, 3)
     selected_bathrooms = random.sample(bathrooms, 3)

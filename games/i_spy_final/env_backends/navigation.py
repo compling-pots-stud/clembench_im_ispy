@@ -184,7 +184,6 @@ class Agent:
         theta = self.get_rotation(object_position, agent_position)
 
         agent_y = agent_rotation['y']
-        rotation = theta - agent_y
         rotation = (theta - agent_y + 360) % 360  # Normalize to [0, 360)
 
         print(f'rotation: {rotation}')
