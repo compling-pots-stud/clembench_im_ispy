@@ -1,3 +1,33 @@
+# ISpy Game Setup
+
+## Environment Setup
+
+AI2Thor configuration is stored inside i_spy_final/env_backends/configs/environments.json
+
+Starting scene, visibility distance, gridSize, fieldOfView, and Height/Width can be changed without breaking the game.
+
+### Running Locally
+
+In order to run locally, the platform argument should be removed from environments.json. Afterwards, the game can run without any additional setup. Upon starting the benchmark, an AI2Thor screen will render, and the game will start.
+
+To install AI2Thor, run pip install ai2thor
+
+### Running on a Linux Server
+
+In order to run the game on a Linux server, you must first setup the environment. To do this, run setup_ai2.sh script, which will install the required linux packages, and initiate an 800x600 virtual display. Note that we need to initiate the virtual displays every time the environment is restarted. 
+
+Additionally, the add "platform": "CloudRendering" to the environments.json configuration file. This will enable running AI2Thor headless.
+
+
+## Folder structure
+
+Inside i_spy_final/env_backends you can find the code used to integrate AI2Thor and other potential environment into the game. 
+
+On every turn, all relevant metadata will be stored inside the metadata folder inside a json file.
+Moreover, the frames from each turn are stored inside the images folder.
+
+Both metadata and images folders maintain the following structure: model/experiment/instance
+
 ### Updates
 (February 2024): We have updated the framework code. If you have written games using the initial release version, see [this guide](docs/howto_update_to_v1.md) on how to update your game.
 
