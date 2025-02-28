@@ -49,24 +49,26 @@ from clemgame.clemgame import GameInstanceGenerator
 # Define the base path relative to this file's location
 BASE_PATH = Path(__file__).parent.parent.parent
 
+VARIANT = 'cot_on'
+
 TEMPLATES = {
     'static' : {
-        'TEACHER_TEMP' : str(BASE_PATH / 'games/i_spy_final/resources/prompts/static/teacher.template'),
-        'LEARNER_TEMP' : str(BASE_PATH / 'games/i_spy_final/resources/prompts/static/learner.template'),
-        'MISTAKE_TEMP': str(BASE_PATH / 'games/i_spy_final/resources/prompts/look/learner_mistake.template'),
-        'MOVE_ERR_TEMP': str(BASE_PATH / 'games/i_spy_final/resources/prompts/look/move_err.template'),
+        'TEACHER_TEMP' : str(BASE_PATH / f'games/i_spy_final/resources/prompts/{VARIANT}/static/teacher.template'),
+        'LEARNER_TEMP' : str(BASE_PATH / f'games/i_spy_final/resources/prompts/{VARIANT}/static/learner.template'),
+        'MISTAKE_TEMP': str(BASE_PATH / f'games/i_spy_final/resources/prompts/{VARIANT}/look/learner_mistake.template'),
+        'MOVE_ERR_TEMP': str(BASE_PATH / f'games/i_spy_final/resources/prompts/{VARIANT}/look/move_err.template'),
     },
     'look': {
-        'TEACHER_TEMP': str(BASE_PATH / 'games/i_spy_final/resources/prompts/look/teacher.template'),
-        'LEARNER_TEMP': str(BASE_PATH / 'games/i_spy_final/resources/prompts/look/learner.template'),
-        'MISTAKE_TEMP': str(BASE_PATH / 'games/i_spy_final/resources/prompts/look/learner_mistake.template'),
-        'MOVE_ERR_TEMP': str(BASE_PATH / 'games/i_spy_final/resources/prompts/look/move_err.template'),
+        'TEACHER_TEMP': str(BASE_PATH / f'games/i_spy_final/resources/prompts/{VARIANT}/look/teacher.template'),
+        'LEARNER_TEMP': str(BASE_PATH / f'games/i_spy_final/resources/prompts/{VARIANT}/look/learner.template'),
+        'MISTAKE_TEMP': str(BASE_PATH / f'games/i_spy_final/resources/prompts/{VARIANT}/look/learner_mistake.template'),
+        'MOVE_ERR_TEMP': str(BASE_PATH / f'games/i_spy_final/resources/prompts/{VARIANT}/look/move_err.template'),
     },
     'interactive': {
-        'TEACHER_TEMP': str(BASE_PATH / 'games/i_spy_final/resources/prompts/interactive/teacher.template'),
-        'LEARNER_TEMP': str(BASE_PATH / 'games/i_spy_final/resources/prompts/interactive/learner.template'),
-        'MISTAKE_TEMP': str(BASE_PATH / 'games/i_spy_final/resources/prompts/look/learner_mistake.template'),
-        'MOVE_ERR_TEMP': str(BASE_PATH / 'games/i_spy_final/resources/prompts/look/move_err.template'),
+        'TEACHER_TEMP': str(BASE_PATH / f'games/i_spy_final/resources/prompts/{VARIANT}/interactive/teacher.template'),
+        'LEARNER_TEMP': str(BASE_PATH / f'games/i_spy_final/resources/prompts/{VARIANT}/interactive/learner.template'),
+        'MISTAKE_TEMP': str(BASE_PATH / f'games/i_spy_final/resources/prompts/{VARIANT}/look/learner_mistake.template'),
+        'MOVE_ERR_TEMP': str(BASE_PATH / f'games/i_spy_final/resources/prompts/{VARIANT}/look/move_err.template'),
     }
 }
 
@@ -97,26 +99,6 @@ def split_words_only_if_camel_case(word_list):
     return [split_camel_case(word) if re.match(r'^[a-z]+[A-Z]|[A-Z][a-z]+[A-Z]', word) else word for word in word_list]
 
 
-# get all types inside each of the experiments.
-# focus on types of objects, size, etc. first.
-# if it doesn't cost much, run with the scene split as well.
-
-# also maybe CoT and no CoT experiments.
-# look at SD
-# maybe the same model plays both sides?
-# the final judge could be another player?
-# def get_scenes() -> list[str]:
-#     kitchens = [f"FloorPlan{i}" for i in range(1, 31)]
-#     living_rooms = [f"FloorPlan{200 + i}" for i in range(1, 31)]
-#     bedrooms = [f"FloorPlan{300 + i}" for i in range(1, 31)]
-#     bathrooms = [f"FloorPlan{400 + i}" for i in range(1, 31)]
-#
-#     scenes = kitchens + living_rooms + bedrooms + bathrooms
-#     scenes = [scene for scene in scenes if scene != 'FloorPlan8']
-#
-#     # scenes = ["FloorPlan1", "FloorPlan201","FloorPlan301","FloorPlan401","FloorPlan21","FloorPlan211","FloorPlan311"]
-#     print(scenes)
-#     return scenes
 
 def get_scenes() -> list[str]:
     kitchens = [f"FloorPlan{i}" for i in range(1, 31)]
@@ -128,7 +110,7 @@ def get_scenes() -> list[str]:
     kitchens = [scene for scene in kitchens if scene != 'FloorPlan8']
 
     # Select 3 random examples from each room type
-    B = random.sample(kitchens, 3)
+    selected_kitchens = random.sample(kitchens, 3)
     selected_living_rooms = random.sample(living_rooms, 3)
     selected_bedrooms = random.sample(bedrooms, 3)
     selected_bathrooms = random.sample(bathrooms, 3)
@@ -136,7 +118,6 @@ def get_scenes() -> list[str]:
     # Combine all selected scenes
     scenes = selected_kitchens + selected_living_rooms + selected_bedrooms + selected_bathrooms
 
-    print(scenes)
     return scenes
 
 
